@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     logs = [];
   }
 
-  // Initialize page events and render data
+  // Initialize page events and render data AFTER data is fetched
   routePage(true);
   hideLoadingOverlay();
 });
