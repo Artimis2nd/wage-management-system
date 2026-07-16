@@ -85,7 +85,7 @@ function initWorkersPage() {
       tr.innerHTML = `
         <td class="py-3 px-4 font-medium text-slate-700">${worker.name}</td>
         <td class="py-3 px-4 text-slate-500">${worker.contact || '-'}</td>
-        <td class="py-3 px-4 text-right font-semibold text-blue-600">฿${parseFloat(worker.baseWage).toFixed(2)}</td>
+        <td class="py-3 px-4 text-right font-semibold text-blue-600">฿${parseFloat(worker.rate).toFixed(2)}</td>
         <td class="py-3 px-4 text-center">
           <div class="flex justify-center gap-2">
             <button onclick="editWorker('${worker.id}')" class="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
@@ -104,7 +104,7 @@ function initWorkersPage() {
             <h4 class="font-bold text-slate-800 text-sm">${worker.name}</h4>
             <p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-phone text-[10px]"></i> ${worker.contact || '-'}</p>
           </div>
-          <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">฿${parseFloat(worker.baseWage).toFixed(2)} / วัน</span>
+          <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg">฿${parseFloat(worker.rate).toFixed(2)} / วัน</span>
         </div>
         <div class="flex gap-2 justify-end pt-2 border-t border-slate-100">
           <button onclick="editWorker('${worker.id}')" class="text-xs bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg font-medium"><i class="fa-solid fa-pen-to-square"></i> แก้ไข</button>
@@ -120,17 +120,17 @@ function initWorkersPage() {
     const id = document.getElementById('worker-id').value;
     const name = document.getElementById('worker-name').value.trim();
     const contact = document.getElementById('worker-contact').value.trim();
-    const baseWage = parseFloat(document.getElementById('worker-wage').value);
+    const rate = parseFloat(document.getElementById('worker-wage').value) || 0;
 
     if (id) {
       // เคสแก้ไขข้อมูล
       const index = workers.findIndex(w => w.id === id);
       if (index !== -1) {
-        workers[index] = { id, name, contact, baseWage };
+        workers[index] = { id, name, contact, rate };
       }
     } else {
       // เคสเพิ่มใหม่
-      workers.push({ id: 'W' + Date.now(), name, contact, baseWage });
+      workers.push({ id: 'W' + Date.now(), name, contact, rate });
     }
 
     saveToLocalStorage();
@@ -155,7 +155,7 @@ function initWorkersPage() {
       document.getElementById('worker-id').value = worker.id;
       document.getElementById('worker-name').value = worker.name;
       document.getElementById('worker-contact').value = worker.contact;
-      document.getElementById('worker-wage').value = worker.baseWage;
+      document.getElementById('worker-wage').value = worker.rate;
       document.getElementById('form-title').innerHTML = `<i class="fa-solid fa-user-pen text-amber-500"></i> <span class="text-amber-500">แก้ไขข้อมูลคนงาน</span>`;
       btnCancel.classList.remove('hidden');
     }
@@ -206,7 +206,7 @@ function initDailyLogPage() {
           <input type="checkbox" id="check-${worker.id}" class="worker-checkbox w-5 h-5 text-blue-600 rounded-lg focus:ring-blue-500 border-slate-300" onchange="calculateDailyTotal()">
           <div>
             <label for="check-${worker.id}" class="font-bold text-slate-800 text-sm cursor-pointer">${worker.name}</label>
-            <p class="text-xs text-slate-500">ค่าแรงเริ่มต้น: ฿${worker.baseWage}/วัน</p>
+            <p class="text-xs text-slate-500">ค่าแรงเริ่มต้น: ฿${worker.rate}/วัน</p>
           </div>
         </div>
         
@@ -278,7 +278,7 @@ function initDailyLogPage() {
         const otHours = parseFloat(document.getElementById(`ot-${worker.id}`).value) || 0;
         
         // อัตราจ้างรายวันคิดที่ 8 ชม.
-        const hourlyRate = worker.baseWage / 8;
+        const hourlyRate = worker.rate / 8;
         const normalPay = normalHours * hourlyRate;
         const otPay = otHours * (hourlyRate * 2); // OT คูณ 2
         calculatedWage = normalPay + otPay;
@@ -325,16 +325,20 @@ function initDailyLogPage() {
       if (isChecked) {
         const type = document.getElementById(`type-${worker.id}`).value;
         let wageAmount = 0;
+        let normalHours = 0;
+        let otHours = 0;
+        let flatAmount = 0;
         let detailsText = "";
 
         if (type === 'daily') {
-          const normal = parseFloat(document.getElementById(`normal-${worker.id}`).value) || 0;
-          const ot = parseFloat(document.getElementById(`ot-${worker.id}`).value) || 0;
-          const hourly = worker.baseWage / 8;
-          wageAmount = (normal * hourly) + (ot * (hourly * 2));
-          detailsText = `ปกติ ${normal} ชม. / OT ${ot} ชม.`;
+          normalHours = parseFloat(document.getElementById(`normal-${worker.id}`).value) || 0;
+          otHours = parseFloat(document.getElementById(`ot-${worker.id}`).value) || 0;
+          const hourly = worker.rate / 8;
+          wageAmount = (normalHours * hourly) + (otHours * (hourly * 2));
+          detailsText = `ปกติ ${normalHours} ชม. / OT ${otHours} ชม.`;
         } else {
-          wageAmount = parseFloat(document.getElementById(`flat-val-${worker.id}`).value) || 0;
+          flatAmount = parseFloat(document.getElementById(`flat-val-${worker.id}`).value) || 0;
+          wageAmount = flatAmount;
           detailsText = `งานเหมา`;
         }
 
@@ -342,6 +346,11 @@ function initDailyLogPage() {
           workerId: worker.id,
           workerName: worker.name,
           workType: type,
+          hours: normalHours,
+          otHours: otHours,
+          maoAmount: flatAmount,
+          deduction: calculateDeduction(wageAmount, type, worker.name),
+          netWage: calculateNetWage(wageAmount, type, worker.name),
           detailsText: detailsText,
           wageAmount: wageAmount
         });
@@ -396,7 +405,7 @@ function initMultiLogPage() {
         <td class="py-3 px-4 text-center">
           <input type="number" id="multi-ratio-${worker.id}" value="1.0" min="0.0" max="2.0" step="0.1" class="w-24 text-center px-2 py-1 rounded-lg border border-slate-300" oninput="calculateMultiTotal()">
         </td>
-        <td class="py-3 px-4 text-right text-slate-500">฿${parseFloat(worker.baseWage).toFixed(2)}</td>
+        <td class="py-3 px-4 text-right text-slate-500">฿${parseFloat(worker.rate).toFixed(2)}</td>
         <td id="multi-calc-${worker.id}" class="py-3 px-4 text-right font-semibold text-slate-700">฿0.00</td>
       `;
       tbody.appendChild(tr);
@@ -415,7 +424,7 @@ function initMultiLogPage() {
       }
 
       const ratio = parseFloat(document.getElementById(`multi-ratio-${worker.id}`).value) || 0;
-      const wage = worker.baseWage * ratio;
+      const wage = worker.rate * ratio;
       calcTd.textContent = `฿${wage.toFixed(2)}`;
       total += wage;
     });
@@ -452,13 +461,19 @@ function initMultiLogPage() {
       const isChecked = document.getElementById(`multi-check-${worker.id}`).checked;
       if (isChecked) {
         const ratio = parseFloat(document.getElementById(`multi-ratio-${worker.id}`).value) || 0;
-        const wageAmount = worker.baseWage * ratio;
+        const wageAmount = worker.rate * ratio;
+        const detailsText = `Timesheet (${ratio} วัน)`;
 
         selectedDetails.push({
           workerId: worker.id,
           workerName: worker.name,
           workType: 'daily',
-          detailsText: `Timesheet (${ratio} วัน)`,
+          hours: ratio * 8, // แปลงเป็นชั่วโมงทำงานโดยประมาณ
+          otHours: 0,
+          maoAmount: 0,
+          deduction: calculateDeduction(wageAmount, 'daily', worker.name),
+          netWage: calculateNetWage(wageAmount, 'daily', worker.name),
+          detailsText: detailsText,
           wageAmount: wageAmount
         });
       }
