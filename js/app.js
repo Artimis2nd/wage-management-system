@@ -352,7 +352,7 @@ function initDailyLogPage() {
           deduction: calculateDeduction(wageAmount, type, worker.name),
           netWage: calculateNetWage(wageAmount, type, worker.name),
           detailsText: detailsText,
-          wageAmount: wageAmount
+          originalWage: wageAmount
         });
       }
     });
@@ -474,7 +474,7 @@ function initMultiLogPage() {
           deduction: calculateDeduction(wageAmount, 'daily', worker.name),
           netWage: calculateNetWage(wageAmount, 'daily', worker.name),
           detailsText: detailsText,
-          wageAmount: wageAmount
+          originalWage: wageAmount
         });
       }
     });
@@ -568,7 +568,7 @@ function initReportPage() {
     filteredLogs.forEach(log => {
       log.details.forEach(det => {
         const name = det.workerName;
-        const wage = det.wageAmount;
+        const wage = det.originalWage;
         const type = det.workType;
 
         if (!workerSummary[name]) {
@@ -656,7 +656,7 @@ function initReportPage() {
 
     filteredLogs.forEach(log => {
       log.details.forEach(det => {
-        const raw = det.wageAmount;
+        const raw = det.originalWage;
         const ded = calculateDeduction(raw, det.workType, det.workerName);
         const net = calculateNetWage(raw, det.workType, det.workerName);
 
