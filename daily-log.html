@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบบันทึกค่าแรงคนงาน - บันทึกงานประจำวัน</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Sarabun', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col pb-20 md:pb-5">
+
+  <!-- Header / Navigation -->
+  <header class="bg-blue-600 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="index.html" class="text-xl font-bold flex items-center gap-2 hover:text-blue-100 transition-all">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>บันทึกงานประจำวัน</span>
+      </a>
+      <span id="sync-status" class="text-xs bg-blue-700 px-3 py-1 rounded-full flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        พร้อมใช้งาน
+      </span>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="max-w-6xl mx-auto px-4 py-6 flex-grow w-full">
+    
+    <form id="daily-log-form" class="space-y-6">
+      
+      <!-- ส่วนที่ 1: ข้อมูลโครงการและรายละเอียดงาน -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-blue-600">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>รายละเอียดโครงการ & ไซต์งาน</span>
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">วันที่ทำงาน <span class="text-red-500">*</span></label>
+            <input type="date" id="log-date" required 
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">ชื่อโครงการ / ไซต์งาน <span class="text-red-500">*</span></label>
+            <input type="text" id="project-name" placeholder="ตัวอย่าง: บ้านลูกค้าตลิ่งชัน" required 
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">รายละเอียดหน้างาน</label>
+            <input type="text" id="work-detail" placeholder="ตัวอย่าง: เทพื้นปูน / ก่อผนัง" 
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+          </div>
+        </div>
+        
+        <div class="mt-4">
+          <label class="block text-sm font-medium text-slate-600 mb-1">หมายเหตุเพิ่มเติม</label>
+          <textarea id="log-notes" rows="2" placeholder="ระบุข้อมูลเพิ่มเติม (ถ้ามี)" 
+                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"></textarea>
+        </div>
+      </div>
+
+      <!-- ส่วนที่ 2: เลือกคนงานและคำนวณค่าแรงรายวัน -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-bold flex items-center gap-2 text-blue-600">
+            <i class="fa-solid fa-user-check"></i>
+            <span>ข้อมูลคนงานประจำวันนี้</span>
+          </h2>
+          <span class="text-xs text-slate-500">ติ๊กเลือกคนงานที่มาทำงานวันนี้</span>
+        </div>
+
+        <!-- รายชื่อคนงานสำหรับการบันทึกค่าแรง -->
+        <div id="workers-daily-container" class="space-y-4">
+          <p class="text-slate-400 text-center py-6">กำลังโหลดรายชื่อคนงานของคุณ...</p>
+        </div>
+      </div>
+
+      <!-- ส่วนที่ 3: แนบรูปถ่ายหน้างาน (ส่งเข้า Google Drive) -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <h2 class="text-lg font-bold mb-3 flex items-center gap-2 text-blue-600">
+          <i class="fa-solid fa-camera"></i>
+          <span>รูปถ่ายรายงานความก้าวหน้าหน้างาน</span>
+        </h2>
+        <p class="text-xs text-slate-500 mb-4">ถ่ายรูปผ่านกล้องมือถือ หรือเลือกไฟล์รูปเพื่ออัปโหลดเก็บเข้าโฟลเดอร์ Google Drive</p>
+        
+        <div class="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-2xl p-6 bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer relative" id="upload-zone">
+          <input type="file" id="image-files" accept="image/*" multiple class="absolute inset-0 opacity-0 cursor-pointer">
+          <i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 mb-2"></i>
+          <span class="text-sm font-medium text-slate-600">กดเพื่อถ่ายภาพ หรือ เลือกรูปจากคลังภาพ</span>
+          <span class="text-xs text-slate-400 mt-1">(สามารถอัปโหลดได้หลายรูปพร้อมกัน)</span>
+        </div>
+
+        <!-- แสดงตัวอย่างรูปภาพที่เลือกไว้ -->
+        <div id="image-preview-container" class="grid grid-cols-3 md:grid-cols-6 gap-3 mt-4"></div>
+      </div>
+
+      <!-- ส่วนท้าย: สรุปค่าแรงและปุ่มเซฟ -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="text-center md:text-left">
+          <p class="text-sm text-slate-500">ยอดค่าแรงรวมสำหรับใบงานวันนี้</p>
+          <h3 id="daily-total-display" class="text-3xl font-bold text-emerald-600">฿0.00</h3>
+        </div>
+        <button type="submit" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-8 rounded-xl shadow-md transition-all text-sm flex items-center justify-center gap-2">
+          <i class="fa-solid fa-floppy-disk text-base"></i> บันทึกใบงานประจำวัน
+        </button>
+      </div>
+
+    </form>
+
+  </main>
+
+  <!-- Mobile Bottom Tab Bar -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-lg px-4 py-2 flex justify-around md:hidden z-50">
+    <a href="index.html" class="flex flex-col items-center text-slate-400 hover:text-blue-500">
+      <i class="fa-solid fa-house text-lg"></i>
+      <span class="text-[10px] mt-1 font-medium">หน้าแรก</span>
+    </a>
+    <a href="daily-log.html" class="flex flex-col items-center text-blue-600">
+      <i class="fa-solid fa-calendar-day text-lg"></i>
+      <span class="text-[10px] mt-1 font-medium">รายวัน</span>
+    </a>
+    <a href="multi-log.html" class="flex flex-col items-center text-slate-400 hover:text-blue-500">
+      <i class="fa-solid fa-calendar-days text-lg"></i>
+      <span class="text-[10px] mt-1 font-medium">หลายวัน</span>
+    </a>
+    <a href="report.html" class="flex flex-col items-center text-slate-400 hover:text-blue-500">
+      <i class="fa-solid fa-file-invoice-dollar text-lg"></i>
+      <span class="text-[10px] mt-1 font-medium">รายงาน</span>
+    </a>
+  </nav>
+
+  <!-- เชื่อมโยงสคริปต์หลัก -->
+  <script src="js/app.js"></script>
+</body>
+</html>

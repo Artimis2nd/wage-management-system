@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบบันทึกค่าแรงคนงาน - บันทึกงานหลายวัน</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Sarabun', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col pb-20 md:pb-5">
+
+  <!-- Header / Navigation -->
+  <header class="bg-blue-600 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="index.html" class="text-xl font-bold flex items-center gap-2 hover:text-blue-100 transition-all">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>บันทึกงานหลายวัน (Timesheet)</span>
+      </a>
+      <span id="sync-status" class="text-xs bg-blue-700 px-3 py-1 rounded-full flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        พร้อมใช้งาน
+      </span>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="max-w-6xl mx-auto px-4 py-6 flex-grow w-full">
+    
+    <form id="multi-log-form" class="space-y-6">
+      
+      <!-- ส่วนที่ 1: รายละเอียดโครงการและช่วงวันทำงาน -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-blue-600">
+          <i class="fa-solid fa-calendar-days"></i>
+          <span>ข้อมูลโครงการ & ช่วงเวลางาน</span>
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-slate-600 mb-1">ชื่อโครงการ / ไซต์งาน <span class="text-red-500">*</span></label>
+            <input type="text" id="multi-project-name" placeholder="ตัวอย่าง: ก่อสร้างอาคารสำนักงานใหญ่" required 
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">วันที่เริ่มต้น <span class="text-red-500">*</span></label>
+            <input type="date" id="multi-start-date" required 
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">วันที่สิ้นสุด <span class="text-red-500">*</span></label>
+            <input type="date" id="multi-end-date" required 
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">รายละเอียดหน้างาน</label>
+            <input type="text" id="multi-work-detail" placeholder="ตัวอย่าง: ปูกระเบื้องชั้น 1-3" 
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-600 mb-1">หมายเหตุเพิ่มเติม</label>
+            <input type="text" id="multi-notes" placeholder="ระบุข้อมูลเพิ่มเติม (ถ้ามี)" 
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+          </div>
+        </div>
+      </div>
+
+      <!-- ส่วนที่ 2: ตารางกรอกสัดส่วนวันทำงาน (Timesheet Matrix) -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-4">
+          <div>
+            <h2 class="text-lg font-bold flex items-center gap-2 text-blue-600">
+              <i class="fa-solid fa-table-cells"></i>
+              <span>ตารางกรอกเศษสัดส่วนจำนวนวันทำงาน</span>
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">กรอกจำนวนวันทำงานของคนงานแต่ละคนในช่วงนี้ เช่น 1.0 (ปกติ), 0.5 (ครึ่งวัน), 1.5 (มีโอที), หรือ 0.0 (ไม่ได้มา)</p>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" id="btn-fill-all-one" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-2 px-3 rounded-lg transition-all">
+              <i class="fa-solid fa-check-double"></i> ตั้งเป็น 1 ทุกคน
+            </button>
+            <button type="button" id="btn-clear-all-zero" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-2 px-3 rounded-lg transition-all">
+              <i class="fa-solid fa-eraser"></i> ล้างข้อมูลเป็น 0
+            </button>
+          </div>
+        </div>
+
+        <!-- ตารางแสดงรายการคนงานสำหรับกรอกสัดส่วน (รองรับการเลื่อนแนวราบทางมือถือเพื่อใช้งานได้ง่าย) -->
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 text-slate-600 text-xs uppercase font-semibold border-b border-slate-200">
+                <th class="py-3.5 px-4 w-12 text-center">มาทำงาน</th>
+                <th class="py-3.5 px-4">ชื่อคนงาน</th>
+                <th class="py-3.5 px-4 text-center" style="width: 200px;">สัดส่วนวันทำงาน (0.0 - 2.0)</th>
+                <th class="py-3.5 px-4 text-right">ค่าแรง/วัน (ปัจจุบัน)</th>
+                <th class="py-3.5 px-4 text-right">คำนวณเงินย่อย</th>
+              </tr>
+            </thead>
+            <tbody id="multi-workers-body" class="divide-y divide-slate-100 text-sm">
+              <tr>
+                <td colspan="5" class="text-center py-8 text-slate-400">กำลังโหลดรายชื่อคนงาน...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ส่วนท้าย: สรุปและเซฟข้อมูล -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="text-center md:text-left">
+          <p class="text-sm text-slate-500">ยอดเงินรวมทั้งโครงการ (ในช่วงวันที่เลือก)</p>
+          <h3 id="multi-total-display" class="text-3xl font-bold text-emerald-600">฿0.00</h3>
+        </div>
+        <button type="submit" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-8 rounded-xl shadow-md transition-all text-sm flex items-center justify-center gap-2">
+          <i class="fa-solid fa-floppy-disk text-base"></i> บันทึกใบงานหลายวัน
+        </button>
+      </div>
+
+    </form>
+
+  </main>
+
+  <!-- Mobile Bottom Tab Bar -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-lg px-4 py-2 flex justify-around md:hidden z-50">
+    <a href="index.html" class="flex flex-col items-center text-slate-400 hover:text-blue-500">
+      <i class="fa-solid fa-house text-lg"></i>
+      <span class="text-[10px] mt-1 font-medium">หน้าแรก</span>
+    </a>
+    <a href="daily-log.html" class="flex flex-col items-center text-slate-400 hover:text-blue-500">
+      <i class="fa-solid fa-calendar-day text-lg"></i>
+      <span class="text-[10px] mt-1 font-medium">รายวัน</span>
+    </a>
+    <a href="multi-log.html" class="flex flex-col items-center text-blue-600">
+      <i class="fa-solid fa-calendar-days text-lg"></i>
+      <span class="text-[10px] mt-1 font-medium">หลายวัน</span>
+    </a>
+    <a href="report.html" class="flex flex-col items-center text-slate-400 hover:text-blue-500">
+      <i class="fa-solid fa-file-invoice-dollar text-lg"></i>
+      <span class="text-[10px] mt-1 font-medium">รายงาน</span>
+    </a>
+  </nav>
+
+  <!-- เชื่อมโยงสคริปต์หลัก -->
+  <script src="js/app.js"></script>
+</body>
+</html>

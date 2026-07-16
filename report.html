@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบบันทึกค่าแรงคนงาน - รายงาน & สรุปงวด</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- SheetJS CDN (ใช้สำหรับสร้างไฟล์ Excel แผ่นใหญ่) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Sarabun', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col pb-20 md:pb-5">
+
+  <!-- Header / Navigation -->
+  <header class="bg-blue-600 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="index.html" class="text-xl font-bold flex items-center gap-2 hover:text-blue-100 transition-all">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>รายงาน & สรุปงวดค่าแรง</span>
+      </a>
+      <span id="sync-status" class="text-xs bg-blue-700 px-3 py-1 rounded-full flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        พร้อมใช้งาน
+      </span>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="max-w-6xl mx-auto px-4 py-6 flex-grow w-full">
+    
+    <!-- ส่วนตัวกรอง (Filter) -->
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6">
+      <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-blue-600">
+        <i class="fa-solid fa-filter"></i>
+        <span>ตัวกรองการเรียกดูข้อมูล</span>
+      </h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1">เลือกโครงการ / ไซต์งาน</label>
+          <select id="filter-project" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+            <option value="all">-- โครงการทั้งหมด --</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1">ตั้งแต่วันที่</label>
+          <input type="date" id="filter-start-date" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1">ถึงวันที่</label>
+          <input type="date" id="filter-end-date" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+        </div>
+      </div>
+      
+      <div class="flex flex-wrap gap-2 mt-4 pt-2 border-t border-slate-100">
+        <button id="btn-apply-filter" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-xl text-sm transition-all flex items-center gap-2">
+          <i class="fa-solid fa-magnifying-glass"></i> กรองข้อมูล
+        </button>
+        <button id="btn-clear-filter" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2.5 px-6 rounded-xl text-sm transition-all">
+          ล้างตัวกรอง
+        </button>
+        <button id="btn-export-excel" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-6 rounded-xl text-sm transition-all ml-auto flex items-center gap-2">
+          <i class="fa-solid fa-file-excel"></i> ส่งออก Excel แผ่นใหญ่
+        </button>
+      </div>
+    </div>
+
+    <!-- ส่วนสรุปตัวเลข (Summary Dashboard) -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <p class="text-sm text-slate-500">ค่าแรงรวมดิบ</p>
+        <h3 id="rep-raw-wage" class="text-2xl font-bold mt-1 text-slate-700">฿0.00</h3>
+      </div>
+      
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <p class="text-sm text-slate-500">ยอดที่นำไปคิดหัก 20%</p>
+        <h3 id="rep-subject-wage" class="text-2xl font-bold mt-1 text-amber-600">฿0.00</h3>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <p class="text-sm text-slate-500">หักค่าดำเนินการ 20%</p>
+        <h3 id="rep-deducted-amount" class="text-2xl font-bold mt-1 text-rose-600">฿0.00</h3>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <p class="text-sm text-slate-500">ยอดจ่ายสุทธิหลังหัก</p>
+        <h3 id="rep-net-wage" class="text-2xl font-bold mt-1 text-emerald-600">฿0.00</h3>
+      </div>
+    </div>
+
+    <!-- ส่วนตารางสรุปรายคน (Worker Summary Grid) -->
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+      <h2 class="text-lg font-bold mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-table-list text-blue-600"></i>
+        <span>ตารางสรุปยอดค่าแรงรายบุคคล (งวดงานนี้)</span>
+      </h2>
+      
+      <div class="overflow-x-auto rounded-xl border border-slate-100">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-50 text-slate-600 text-xs uppercase font-semibold border-b border-slate-100">
+              <th class="py-3 px-4">ชื่อคนงาน</th>
+              <th class="py-3 px-4 text-right">จำนวนวันทำงานรวม</th>
+              <th class="py-3 px-4 text-right">ยอดเงินรวมดิบ</th>
+              <th class="py-3 px-4 text-right">ประเภทงาน</th>
+              <th class="py-3 px-4 text-right">ส่วนที่หัก 20%</th>
+              <th class="py-3 px-4 text-right">ยอดรับสุทธิ</th>
+            </tr>
+          </thead>
+          <tbody id="report-table-body" class="divide-y divide-slate-100 text-sm">
+            <tr>
+              <td colspan="6" class="text-center py-8 text-slate-400">กรุณาเลือกตัวกรองแล้วกดปุ่ม "กรองข้อมูล"</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Mobile Bottom Tab Bar -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-lg px-4 py-2 flex justify-around md:hidden z-50">
+    <a href="index.html" class="flex flex-col items-center text-slate-400 hover:text-blue-500">
+      <i class="fa-solid fa-house text-lg"></i>
+      <span class="text-[10px] mt-1 font-medium">หน้าแรก</span>
+    </a>
+    <a href="daily-log.html" class="flex flex-col items-center text-slate-400 hover:text-blue-500">
+      <i class="fa-solid fa-calendar-day text-lg"></i>
+      <span class="text-[10px] mt-1 font-medium">รายวัน</span>
+    </a>
+    <a href="multi-log.html" class="flex flex-col items-center text-slate-400 hover:text-blue-500">
+      <i class="fa-solid fa-calendar-days text-lg"></i>
+      <span class="text-[10px] mt-1 font-medium">หลายวัน</span>
+    </a>
+    <a href="report.html" class="flex flex-col items-center text-blue-600">
+      <i class="fa-solid fa-file-invoice-dollar text-lg"></i>
+      <span class="text-[10px] mt-1 font-medium">รายงาน</span>
+    </a>
+  </nav>
+
+  <!-- เชื่อมโยงสคริปต์หลัก -->
+  <script src="js/app.js"></script>
+</body>
+</html>
