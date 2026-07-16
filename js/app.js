@@ -126,11 +126,11 @@ function initWorkersPage() {
       // เคสแก้ไขข้อมูล
       const index = workers.findIndex(w => w.id === id);
       if (index !== -1) {
-        workers[index] = { id, name, contact, rate };
+        workers[index] = { id, name, contact, rate, status: workers[index].status || 'active' };
       }
     } else {
       // เคสเพิ่มใหม่
-      workers.push({ id: 'W' + Date.now(), name, contact, rate });
+      workers.push({ id: 'W' + Date.now(), name, contact, rate, status: 'active' });
     }
 
     saveToLocalStorage();
