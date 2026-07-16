@@ -386,12 +386,17 @@ function initDailyLogPage(runSetup) {
     try {
       const newLog = await apiCall('addLog', logData);
       logs.push(newLog);
-      Swal.fire('บันทึกสำเร็จ!', 'ใบงานถูกบันทึกลง Cloud เรียบร้อย', 'success').then(() => {
-        window.location.href = 'index.html';
-      });
     } catch (error) {
       // Error is already shown by apiCall
+      // No need to do anything else, hideLoadingOverlay will be called in finally
+      return; // Stop execution if apiCall fails
+    } finally {
+      hideLoadingOverlay();
     }
+    
+    Swal.fire('บันทึกสำเร็จ!', 'ใบงานถูกบันทึกลง Cloud เรียบร้อย', 'success').then(() => {
+      window.location.href = 'index.html';
+    });
   });
   }
   renderDailyWorkers();
