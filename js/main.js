@@ -18,8 +18,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Initialize page events and render data AFTER data is fetched
-  routePage(true);
-  hideLoadingOverlay();
+  // ใช้ try/finally เพื่อให้ overlay ปิดเสมอ แม้ routePage จะเกิด error ระหว่างประมวลผล
+  // (ป้องกันปัญหาหน้าเว็บค้างที่ "กำลังโหลดข้อมูล..." ไม่หยุด หากมีบั๊กเกิดขึ้นระหว่างการ init หน้าใดหน้าหนึ่ง)
+  try {
+    routePage(true);
+  } catch (err) {
+    console.error('เกิดข้อผิดพลาดระหว่างโหลดหน้า:', err);
+  } finally {
+    hideLoadingOverlay();
+  }
 });
 
 function routePage(runSetup) {
@@ -543,7 +550,8 @@ function initReportPage(runSetup) {
       log.details.forEach(det => {
         const name = det.workerName;
         if (!workerSummary[name]) {
-          workerSummary[name] = { name, daysCount: 0, rawTotal: 0, typeText: new Set(), deductedTotal: 0, netTotal: 0 };
+          const workerInfo = workers.find(w => w.id === det.workerId);
+          workerSummary[name] = { name, rate: workerInfo ? workerInfo.rate : 0, daysCount: 0, rawTotal: 0, typeText: new Set(), deductedTotal: 0, netTotal: 0 };
         }
 
         // ใช้ค่าที่คำนวณและบันทึกไว้แล้วจากตอนสร้างใบงานโดยตรง
