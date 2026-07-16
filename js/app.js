@@ -312,7 +312,7 @@ function initDailyLogPage() {
     });
   });
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const date = document.getElementById('log-date').value;
     const project = document.getElementById('project-name').value.trim();
@@ -362,6 +362,28 @@ function initDailyLogPage() {
       return;
     }
 
+    // --- ส่วนที่เพิ่มเข้ามา: อ่านไฟล์รูปภาพเป็น Base64 ---
+    const imageFiles = document.getElementById('image-files').files;
+    const imagePromises = Array.from(imageFiles).map(file => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          // แยกเอาเฉพาะส่วนข้อมูล Base64 ไม่เอาส่วนหัว "data:image/jpeg;base64,"
+          const base64String = event.target.result.split(',')[1];
+          resolve({
+            filename: file.name,
+            mimeType: file.type,
+            data: base64String
+          });
+        };
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+      });
+    });
+
+    const imagesData = await Promise.all(imagePromises);
+    // ----------------------------------------------------
+
     const logId = 'L' + Date.now();
     logs.push({
       id: logId,
@@ -369,6 +391,7 @@ function initDailyLogPage() {
       project,
       detail,
       notes,
+      images: imagesData, // แนบข้อมูลรูปภาพเข้าไปใน log
       details: selectedDetails
     });
 
@@ -748,15 +771,18 @@ async function pushDataToCloud() {
 
     const response = await fetch(API_URL, {
       method: "POST",
-      mode: "no-cors", // ใช้ no-cors เพื่อเลี่ยงปัญหาระบบรักษาความปลอดภัยบน Web App
+      // mode: "no-cors", // <--- เอาออก! การใช้ no-cors ทำให้ส่งข้อมูลขนาดใหญ่ (เช่น รูปภาพ) ไม่ได้
       headers: {
-        "Content-Type": "application/json"
+        // ไม่ต้องระบุ Content-Type, fetch จะจัดการให้เองเมื่อ body เป็น text
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      // เพิ่ม redirect: "follow" เพื่อให้ทำงานกับ Apps Script ที่มีการ redirect ได้ถูกต้อง
+      redirect: "follow"
     });
 
-    // เนื่องจากใช้ no-cors ผลตอบรับ (Response) จะมีชนิดเป็น opaque 
-    // เราจึงอิงสถานะว่าสำเร็จไว้ก่อนเมื่อไม่มี Error เด้งขึ้นมา
+    // เมื่อเอา no-cors ออก เราจะสามารถอ่าน response จริงๆ จาก server ได้
+    const result = await response.json();
+
     Swal.fire({
       icon: 'success',
       title: 'บันทึกสำเร็จ!',
