@@ -590,19 +590,21 @@ function initReportPage(runSetup) {
         if (!workerSummary[name]) {
           workerSummary[name] = { name, daysCount: 0, rawTotal: 0, typeText: new Set(), deductedTotal: 0, netTotal: 0 };
         }
-        
+
+        // ใช้ค่าที่คำนวณและบันทึกไว้แล้วจากตอนสร้างใบงานโดยตรง
+        // เพื่อให้แน่ใจว่าตัวเลขตรงกัน 100%
         const raw = det.originalWage || 0;
         const ded = det.deduction || 0;
         const net = det.netWage || 0;
 
         workerSummary[name].daysCount += (det.detailsText.includes("Timesheet") ? parseFloat(det.detailsText.replace(/[^0-9.]/g, '')) : 1);
         workerSummary[name].rawTotal += raw;
-        workerSummary[name].deductedTotal += ded;
-        workerSummary[name].netTotal += net;
+        workerSummary[name].deductedTotal += ded; // ยอดโบนัสสะสมรายคน
+        workerSummary[name].netTotal += net; // ยอดสุทธิสะสมรายคน
         workerSummary[name].typeText.add(det.workType === 'flat' ? 'งานเหมา' : 'รายวัน');
 
         totalRaw += raw;
-        if (det.workType !== 'flat' && !name.includes('เฟิร์น')) totalSubject += raw;
+        if (ded > 0) totalSubject += raw; // ยอดที่นำไปคิดโบนัส คือยอดที่มีโบนัสเกิดขึ้นจริง
         totalDeducted += ded;
         totalNet += net;
       });
