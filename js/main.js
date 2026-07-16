@@ -5,23 +5,20 @@ let logs = [];
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', async () => {
   showLoadingOverlay('กำลังโหลดข้อมูล...');
-  
-  // Load from LocalStorage first for speed
-  workers = JSON.parse(localStorage.getItem('workers')) || [];
-  logs = JSON.parse(localStorage.getItem('logs')) || [];
-  
-  // Initialize page events ONCE
-  routePage(true);
 
-  // Then, fetch fresh data from the cloud
+  // Fetch fresh data from the cloud on every page load
   const cloudData = await pullAllData();
   if (cloudData) {
     workers = cloudData.workers;
     logs = cloudData.logs;
-    // Just re-render the data, don't re-attach events
-    routePage(false);
+  } else {
+    // Handle case where data cannot be fetched
+    workers = [];
+    logs = [];
   }
-  
+
+  // Initialize page events and render data
+  routePage(true);
   hideLoadingOverlay();
 });
 
@@ -38,11 +35,6 @@ function routePage(runSetup) {
   } else if (page === 'report.html') {
     initReportPage(runSetup); // Pass the parameter down
   }
-}
-
-function saveToLocalStorage() {
-  localStorage.setItem('workers', JSON.stringify(workers));
-  localStorage.setItem('logs', JSON.stringify(logs));
 }
 
 // --- UI HELPERS ---
@@ -391,7 +383,6 @@ function initDailyLogPage(runSetup) {
     try {
       const newLog = await apiCall('addLog', logData);
       logs.push(newLog);
-      saveToLocalStorage();
       Swal.fire('บันทึกสำเร็จ!', 'ใบงานถูกบันทึกลง Cloud เรียบร้อย', 'success').then(() => {
         window.location.href = 'index.html';
       });
