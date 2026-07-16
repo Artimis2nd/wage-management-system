@@ -1,5 +1,5 @@
 // 🔴 วาง URL ของ Web App ใหม่ที่คุณได้จากขั้นตอนที่ 1 ตรงนี้ 🔴
-const API_URL = "https://script.google.com/macros/s/AKfycby-yXa4kJVigkWlZu5HNR_4S6siukmIeWcGlG9V77Zr3tt_nt23XHQFA2DebwGfDPbd/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyCsr_cKMTDPYkjsNDmU0135BlMJ2dsQAm1ZuD55vO9uKur9BGQwm8Otx8G0LeDUSPF/exec";
 
 /**
  * ฟังก์ชันกลางสำหรับส่งข้อมูลไปที่ Google Apps Script
