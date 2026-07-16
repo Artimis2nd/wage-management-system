@@ -315,7 +315,7 @@ function initDailyLogPage() {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const date = document.getElementById('log-date').value;
-    const project = document.getElementById('project-name').value.trim();
+    const site = document.getElementById('project-name').value.trim();
     const detail = document.getElementById('work-detail').value.trim();
     const notes = document.getElementById('log-notes').value.trim();
 
@@ -388,7 +388,7 @@ function initDailyLogPage() {
     logs.push({
       id: logId,
       date,
-      project,
+      site,
       detail,
       notes,
       images: imagesData, // แนบข้อมูลรูปภาพเข้าไปใน log
@@ -473,7 +473,7 @@ function initMultiLogPage() {
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    const projectName = document.getElementById('multi-project-name').value.trim();
+    const siteName = document.getElementById('multi-project-name').value.trim();
     const startDate = document.getElementById('multi-start-date').value;
     const endDate = document.getElementById('multi-end-date').value;
     const detail = document.getElementById('multi-work-detail').value.trim();
@@ -511,7 +511,7 @@ function initMultiLogPage() {
     logs.push({
       id: 'ML' + Date.now(),
       date: `${startDate} ถึง ${endDate}`,
-      project: projectName,
+      site: siteName,
       detail: detail,
       notes: notes,
       details: selectedDetails
@@ -551,7 +551,7 @@ function initReportPage() {
   const btnExport = document.getElementById('btn-export-excel');
 
   // ดึงรายชื่อโครงการทั้งหมดมาสร้าง Option ใน ตัวกรอง
-  const uniqueProjects = [...new Set(logs.map(l => l.project))];
+  const uniqueProjects = [...new Set(logs.map(l => l.site))];
   uniqueProjects.forEach(proj => {
     const opt = document.createElement('option');
     opt.value = proj;
@@ -568,7 +568,7 @@ function initReportPage() {
 
     // ตัวกรองโครงการ
     if (projFilter !== 'all') {
-      filteredLogs = filteredLogs.filter(l => l.project === projFilter);
+      filteredLogs = filteredLogs.filter(l => l.site === projFilter);
     }
 
     // ตัวกรองช่วงวันที่
@@ -685,7 +685,7 @@ function initReportPage() {
 
         dataForExcel.push([
           log.date,
-          log.project,
+          log.site,
           log.detail || "-",
           det.workerName,
           det.workType === 'flat' ? 'งานเหมา' : 'รายวัน',
