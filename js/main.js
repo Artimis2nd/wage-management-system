@@ -628,7 +628,7 @@ function initReportPage(runSetup) {
         <td class="py-3 px-4 text-right">${row.daysCount.toFixed(1)} วัน</td>
         <td class="py-3 px-4 text-right">฿${row.rawTotal.toFixed(2)}</td>
         <td class="py-3 px-4 text-right text-xs"><span class="bg-slate-100 px-2 py-1 rounded">${[...row.typeText].join(', ')}</span></td>
-        <td class="py-3 px-4 text-right text-rose-600 font-medium">-฿${row.deductedTotal.toFixed(2)}</td>
+        <td class="py-3 px-4 text-right text-sky-600 font-medium">+฿${row.deductedTotal.toFixed(2)}</td>
         <td class="py-3 px-4 text-right font-bold text-emerald-600">฿${row.netTotal.toFixed(2)}</td>
       `;
       reportTbody.appendChild(tr);
@@ -645,7 +645,7 @@ function initReportPage(runSetup) {
   });
 
   btnExport.addEventListener('click', () => {
-    const dataForExcel = [["วันที่ทำใบงาน", "ไซต์งาน/โครงการ", "รายละเอียดงาน", "ชื่อคนงาน", "ประเภทงาน", "รายละเอียดชั่วโมง/วัน", "ค่าแรงดิบ (บาท)", "ส่วนต่างหัก 20% (บาท)", "ยอดจ่ายสุทธิ (บาท)", "ลิงก์รูปภาพ"]];
+    const dataForExcel = [["วันที่ทำใบงาน", "ไซต์งาน/โครงการ", "รายละเอียดงาน", "ชื่อคนงาน", "ประเภทงาน", "รายละเอียดชั่วโมง/วัน", "ค่าแรงดิบ (บาท)", "โบนัส 20% (บาท)", "ยอดจ่ายสุทธิ (บาท)", "ลิงก์รูปภาพ"]];
     const checkedProjects = [...projectFilterOptions.querySelectorAll('.project-filter-checkbox:checked')].map(cb => cb.value);
     const startFilter = document.getElementById('filter-start-date').value;
     const endFilter = document.getElementById('filter-end-date').value;
