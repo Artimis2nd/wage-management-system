@@ -235,7 +235,7 @@ function initWorkersPage(runSetup) {
       // Error is already shown by apiCall function
     } finally {
       hideLoadingOverlay();
-    }
+    } 
   });
 
   btnCancel.addEventListener('click', resetForm);
