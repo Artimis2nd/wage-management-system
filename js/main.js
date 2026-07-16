@@ -517,68 +517,26 @@ function initDailyLogPage(runSetup) {
 
 function initReportPage(runSetup) {
   console.log("Initializing Report Page");
-  const projectFilterBtn = document.getElementById('project-filter-btn');
-  const projectFilterDropdown = document.getElementById('project-filter-dropdown');
-  const projectFilterOptions = document.getElementById('project-filter-options');
-  const projectFilterText = document.getElementById('project-filter-text');
-  const projectFilterCloseBtn = document.getElementById('project-filter-close-btn');
   const btnApply = document.getElementById('btn-apply-filter');
   const btnClear = document.getElementById('btn-clear-filter');
   const btnExport = document.getElementById('btn-export-excel');
   const reportTbody = document.getElementById('report-table-body');
 
-  if (runSetup && !projectFilterBtn) return;
-
-  // --- Setup Project Filter Dropdown ---
-  const uniqueProjects = [...new Set(logs.map(l => l.site).filter(Boolean))];
-  projectFilterOptions.innerHTML = ''; // Clear previous options
-
-  uniqueProjects.forEach(project => {
-    const optionHtml = `
-      <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer">
-        <input type="checkbox" value="${project}" class="project-filter-checkbox w-5 h-5 text-blue-600 rounded-md focus:ring-blue-500 border-slate-300">
-        <span class="text-sm font-medium text-slate-700">${project}</span>
-      </label>
-    `;
-    projectFilterOptions.insertAdjacentHTML('beforeend', optionHtml);
-  });
+  // Exit if not on the report page
+  if (!btnApply) return;
 
   if (runSetup) {
     console.log("Setting up Report Page events");
-  const toggleDropdown = () => projectFilterDropdown.classList.toggle('hidden');
-  projectFilterBtn.addEventListener('click', toggleDropdown);
-  projectFilterCloseBtn.addEventListener('click', toggleDropdown);
-
-  // Update button text when checkboxes change
-  projectFilterOptions.addEventListener('change', () => {
-    const checked = projectFilterOptions.querySelectorAll('.project-filter-checkbox:checked');
-    if (checked.length === 0) {
-      projectFilterText.textContent = '-- โครงการทั้งหมด --';
-    } else if (checked.length === 1) {
-      projectFilterText.textContent = checked[0].value;
-    } else {
-      projectFilterText.textContent = `${checked.length} โครงการที่เลือก`;
-    }
-  });
-
-  // Close dropdown if clicked outside
-  document.addEventListener('click', (event) => {
-    if (!projectFilterBtn.contains(event.target) && !projectFilterDropdown.contains(event.target)) {
-      projectFilterDropdown.classList.add('hidden');
-    }
-  });
 
   function processReportData() {
-    const checkedProjects = [...projectFilterOptions.querySelectorAll('.project-filter-checkbox:checked')].map(cb => cb.value);
     const startFilter = document.getElementById('filter-start-date').value;
     const endFilter = document.getElementById('filter-end-date').value;
 
     let filteredLogs = logs.filter(log => {
-      const projectMatch = checkedProjects.length === 0 || checkedProjects.includes(log.site);
       const date = log.date.split('T')[0];
       const startDateMatch = !startFilter || date >= startFilter;
       const endDateMatch = !endFilter || date <= endFilter;
-      return projectMatch && startDateMatch && endDateMatch;
+      return startDateMatch && endDateMatch;
     });
 
     const workerSummary = {};
@@ -639,25 +597,21 @@ function initReportPage(runSetup) {
 
   btnApply.addEventListener('click', processReportData);
   btnClear.addEventListener('click', () => {
-    projectFilterOptions.querySelectorAll('.project-filter-checkbox:checked').forEach(cb => cb.checked = false);
     document.getElementById('filter-start-date').value = '';
     document.getElementById('filter-end-date').value = '';
-    projectFilterText.textContent = '-- โครงการทั้งหมด --';
     processReportData();
   });
 
   btnExport.addEventListener('click', () => {
     const dataForExcel = [["วันที่ทำใบงาน", "ไซต์งาน/โครงการ", "รายละเอียดงาน", "ชื่อคนงาน", "ประเภทงาน", "รายละเอียดชั่วโมง/วัน", "ค่าแรงดิบ (บาท)", "โบนัส 20% (บาท)", "ยอดจ่ายสุทธิ (บาท)", "ลิงก์รูปภาพ"]];
-    const checkedProjects = [...projectFilterOptions.querySelectorAll('.project-filter-checkbox:checked')].map(cb => cb.value);
     const startFilter = document.getElementById('filter-start-date').value;
     const endFilter = document.getElementById('filter-end-date').value;
 
     let filteredLogs = logs.filter(log => {
-      const projectMatch = checkedProjects.length === 0 || checkedProjects.includes(log.site);
       const date = log.date.split('T')[0];
       const startDateMatch = !startFilter || date >= startFilter;
       const endDateMatch = !endFilter || date <= endFilter;
-      return projectMatch && startDateMatch && endDateMatch;
+      return startDateMatch && endDateMatch;
     });
 
     if (filteredLogs.length === 0) {
