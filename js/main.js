@@ -581,7 +581,7 @@ function initReportPage(runSetup) {
       const tr = document.createElement('tr');
       tr.className = "hover:bg-slate-50 transition-colors";
       tr.innerHTML = `
-        <td class="py-3 px-4 font-bold text-slate-700">${row.name}</td>
+        <td class="py-3 px-4 font-bold text-slate-700">${row.name} <span class="font-normal text-slate-400 text-xs">(ค่าแรง ${row.rate.toFixed(2)} บาท)</span></td>
         <td class="py-3 px-4 text-right">${row.daysCount.toFixed(1)} วัน</td>
         <td class="py-3 px-4 text-right">฿${row.rawTotal.toFixed(2)}</td>
         <td class="py-3 px-4 text-right text-xs"><span class="bg-slate-100 px-2 py-1 rounded">${[...row.typeText].join(', ')}</span></td>
