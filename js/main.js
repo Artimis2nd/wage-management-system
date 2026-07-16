@@ -527,7 +527,7 @@ function initReportPage(runSetup) {
   });
 
   btnExport.addEventListener('click', () => {
-    const dataForExcel = [["วันที่ทำใบงาน", "ไซต์งาน/โครงการ", "รายละเอียดงาน", "ชื่อคนงาน", "ประเภทงาน", "รายละเอียดชั่วโมง/วัน", "ค่าแรงดิบ (บาท)", "ส่วนต่างหัก 20% (บาท)", "ยอดจ่ายสุทธิ (บาท)"]];
+    const dataForExcel = [["วันที่ทำใบงาน", "ไซต์งาน/โครงการ", "รายละเอียดงาน", "ชื่อคนงาน", "ประเภทงาน", "รายละเอียดชั่วโมง/วัน", "ค่าแรงดิบ (บาท)", "ส่วนต่างหัก 20% (บาท)", "ยอดจ่ายสุทธิ (บาท)", "ลิงก์รูปภาพ"]];
     const checkedProjects = [...projectFilterOptions.querySelectorAll('.project-filter-checkbox:checked')].map(cb => cb.value);
     const startFilter = document.getElementById('filter-start-date').value;
     const endFilter = document.getElementById('filter-end-date').value;
@@ -547,7 +547,7 @@ function initReportPage(runSetup) {
 
     filteredLogs.forEach(log => {
       log.details.forEach(det => {
-        dataForExcel.push([log.date, log.site, log.detail || "-", det.workerName, det.workType, det.detailsText, det.originalWage, det.deduction, det.netWage]);
+        dataForExcel.push([log.date, log.site, log.detail || "-", det.workerName, det.workType, det.detailsText, det.originalWage, det.deduction, det.netWage, (log.images || []).join(', ')]);
       });
     });
 
