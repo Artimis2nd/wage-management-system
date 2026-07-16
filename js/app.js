@@ -41,21 +41,92 @@ function saveToLocalStorage() {
 
 // --- 2. หน้าหลัก (index.html) ---
 function initIndexPage() {
-  const totalWorkers = document.getElementById('dash-total-workers');
-  const todayJobs = document.getElementById('dash-today-jobs');
-  const totalWage = document.getElementById('dash-total-wage');
+  const totalWorkersEl = document.getElementById('dash-total-workers');
+  const totalLogsEl = document.getElementById('dash-total-logs');
+  const totalWagesEl = document.getElementById('dash-total-wages');
+  const tableBody = document.getElementById('logs-table-body');
+  const mobileList = document.getElementById('logs-mobile-list');
+  const searchInput = document.getElementById('search-logs');
+  const refreshBtn = document.getElementById('btn-refresh');
 
-  if (totalWorkers) totalWorkers.textContent = `${workers.length} คน`;
-  if (todayJobs) todayJobs.textContent = `${logs.filter(l => l.date === new Date().toISOString().split('T')[0]).length} รายการ`;
-  
-  // สรุปยอดเงินรวมสุทธิทั้งหมด
-  let sumNet = 0;
-  logs.forEach(log => {
-    log.details.forEach(det => {
-      sumNet += calculateNetWage(det.wageAmount, det.workType, det.workerName);
+  function renderLogs(logsToRender) {
+    if (!tableBody || !mobileList) return;
+
+    tableBody.innerHTML = '';
+    mobileList.innerHTML = '';
+
+    if (logsToRender.length === 0) {
+      const emptyHtml = `<td colspan="6" class="text-center py-8 text-slate-400">ไม่พบรายการบันทึก</td>`;
+      tableBody.innerHTML = `<tr>${emptyHtml}</tr>`;
+      mobileList.innerHTML = `<div class="text-center py-8 text-slate-400">ไม่พบรายการบันทึก</div>`;
+      return;
+    }
+
+    // เรียงลำดับตามวันที่ล่าสุดก่อนแสดงผล
+    const sortedLogs = logsToRender.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    sortedLogs.forEach(log => {
+      const totalWage = log.details.reduce((sum, det) => sum + det.originalWage, 0);
+      const workerCount = log.details.length;
+
+      // Desktop view
+      const tr = document.createElement('tr');
+      tr.className = "hover:bg-slate-50 transition-colors";
+      tr.innerHTML = `
+        <td class="py-3 px-4">${new Date(log.date).toLocaleDateString('th-TH')}</td>
+        <td class="py-3 px-4 font-medium text-slate-700">${log.site || '-'}</td>
+        <td class="py-3 px-4 text-slate-500">${log.detail || '-'}</td>
+        <td class="py-3 px-4 text-center">${workerCount} คน</td>
+        <td class="py-3 px-4 text-right font-semibold text-emerald-600">฿${totalWage.toFixed(2)}</td>
+        <td class="py-3 px-4 text-center">
+          <button onclick="deleteLog('${log.id}')" class="p-1.5 text-slate-400 hover:bg-rose-100 hover:text-rose-600 rounded-lg transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+        </td>
+      `;
+      tableBody.appendChild(tr);
+
+      // Mobile view
+      const card = document.createElement('div');
+      card.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2";
+      card.innerHTML = `
+        <div class="flex justify-between items-start">
+          <div>
+            <p class="text-xs text-slate-500">${new Date(log.date).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+            <h4 class="font-bold text-slate-800 text-sm mt-1">${log.site || 'ไม่มีชื่อโครงการ'}</h4>
+            <p class="text-xs text-slate-500">${log.detail || '-'}</p>
+          </div>
+          <span class="text-sm font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-lg">฿${totalWage.toFixed(2)}</span>
+        </div>
+        <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+          <span class="text-xs text-slate-400">${workerCount} คนทำงาน</span>
+          <button onclick="deleteLog('${log.id}')" class="text-xs bg-rose-50 text-rose-600 px-3 py-1.5 rounded-lg font-medium"><i class="fa-solid fa-trash-can"></i> ลบรายการนี้</button>
+        </div>
+      `;
+      mobileList.appendChild(card);
     });
-  });
-  if (totalWage) totalWage.textContent = `฿${sumNet.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+  }
+
+  function updateDashboard() {
+    if (totalWorkersEl) totalWorkersEl.textContent = `${workers.length} คน`;
+    if (totalLogsEl) totalLogsEl.textContent = `${logs.length} รายการ`;
+    
+    let sumNet = logs.reduce((total, log) => 
+      total + log.details.reduce((subTotal, det) => subTotal + det.netWage, 0), 0);
+    if (totalWagesEl) totalWagesEl.textContent = `฿${sumNet.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    
+    renderLogs(logs);
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      const filtered = logs.filter(l => (l.site && l.site.toLowerCase().includes(searchTerm)) || (l.detail && l.detail.toLowerCase().includes(searchTerm)));
+      renderLogs(filtered);
+    });
+  }
+
+  if (refreshBtn) refreshBtn.addEventListener('click', () => window.location.reload());
+
+  updateDashboard();
 }
 
 // --- 3. หน้าจัดการคนงาน (workers.html) ---
@@ -184,6 +255,23 @@ function initWorkersPage() {
   renderWorkers();
 }
 
+window.deleteLog = function(id) {
+  Swal.fire({
+    title: 'คุณแน่ใจหรือไม่?',
+    text: "ใบงานนี้จะถูกลบออกจากระบบ!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'ใช่, ต้องการลบ!',
+    cancelButtonText: 'ยกเลิก'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      logs = logs.filter(l => l.id !== id);
+      saveToLocalStorage(); // This will trigger pushDataToCloud
+    }
+  });
+};
 // --- 4. หน้าบันทึกงานประจำวัน (daily-log.html) ---
 function initDailyLogPage() {
   document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
@@ -801,10 +889,9 @@ async function pushDataToCloud() {
 
 // อัปเดตส่วนควบคุมหน้าหลัก (แก้ไขต่อเข้ากับฟังก์ชันสตรีมมิ่งในหน้าแรก)
 const originalInitIndexPage = initIndexPage;
-initIndexPage = async function() {
-  originalInitIndexPage(); // เรียกใช้ฟังก์ชันเดิมเพื่อแสดงข้อมูล Local ก่อนอย่างรวดเร็ว
+initIndexPage = async function() {  
+  // พยายามอัปเดตข้อมูลล่าสุดจาก Google Sheets มาทับก่อน
   
-  // พยายามอัปเดตข้อมูลล่าสุดจาก Google Sheets มาทับ
   const syncStatus = document.getElementById('sync-status');
   if (syncStatus) {
     syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> กำลังดึงข้อมูลคลาวด์...`;
@@ -812,7 +899,6 @@ initIndexPage = async function() {
   
   const isPulled = await pullDataFromCloud();
   if (isPulled) {
-    originalInitIndexPage(); // แสดงค่าใหม่อีกครั้งเมื่อดึงสำเร็จ
     if (syncStatus) {
       syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> ข้อมูลเป็นปัจจุบัน`;
     }
@@ -821,6 +907,8 @@ initIndexPage = async function() {
       syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-400"></span> โหมดออฟไลน์`;
     }
   }
+
+  originalInitIndexPage(); // เรียกใช้ฟังก์ชันเดิมเพื่อแสดงข้อมูล (ไม่ว่าจะดึงสำเร็จหรือไม่)
 };
 
 // นำฟังก์ชันอัปเดตระบบอัตโนมัติไปผูกกับปุ่มบันทึก
