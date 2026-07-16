@@ -377,6 +377,8 @@ function initDailyLogPage(runSetup) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     showLoadingOverlay('กำลังบันทึกใบงาน...');
+    
+    let isSuccess = false;
 
     const selectedDetails = [];
     workers.forEach(worker => {
@@ -438,21 +440,24 @@ function initDailyLogPage(runSetup) {
         const updatedLog = await apiCall('updateLog', logData);
         const index = logs.findIndex(l => l.id === logIdToEdit);
         if (index !== -1) logs[index] = updatedLog;
+        isSuccess = true;
       } else {
         const newLog = await apiCall('addLog', logData);
         logs.push(newLog);
+        isSuccess = true;
       }
     } catch (error) {
       // Error is already shown by apiCall
-      // No need to do anything else, hideLoadingOverlay will be called in finally
-      return; // Stop execution if apiCall fails
+      isSuccess = false;
     } finally {
       hideLoadingOverlay();
     }
     
-    Swal.fire('บันทึกสำเร็จ!', 'ใบงานถูกบันทึกลง Cloud เรียบร้อย', 'success').then(() => {
-      window.location.href = 'index.html';
-    });
+    if (isSuccess) {
+      Swal.fire('บันทึกสำเร็จ!', 'ใบงานถูกบันทึกลง Cloud เรียบร้อย', 'success').then(() => {
+        window.location.href = 'index.html';
+      });
+    }
   });
   }
   renderDailyWorkers();
