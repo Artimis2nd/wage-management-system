@@ -234,12 +234,12 @@ function initWorkersPage() {
         workers.push(newWorker);
       }
       
-      saveToLocalStorage();
       renderWorkers();
       resetForm();
       Swal.fire('บันทึกสำเร็จ!', 'ข้อมูลคนงานถูกบันทึกลง Cloud เรียบร้อย', 'success');
     } catch (error) {
       // Error is already shown by apiCall function
+    } finally {
       hideLoadingOverlay();
     }
   });
