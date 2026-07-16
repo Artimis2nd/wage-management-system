@@ -10,16 +10,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   workers = JSON.parse(localStorage.getItem('workers')) || [];
   logs = JSON.parse(localStorage.getItem('logs')) || [];
   
-  // Initialize the page with local data
-  routePage();
+  // Initialize page events ONCE
+  routePage(true);
 
   // Then, fetch fresh data from the cloud
   const cloudData = await pullAllData();
   if (cloudData) {
     workers = cloudData.workers;
     logs = cloudData.logs;
-    saveToLocalStorage(); // Save fresh data
-    routePage(); // Re-render the page with fresh data
+    // Just re-render the data, don't re-attach events
+    routePage(false);
   }
   
   hideLoadingOverlay();
@@ -27,16 +27,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function routePage() {
   const path = window.location.pathname;
-  const page = path.split("/").pop();
+  const page = path.split("/").pop() || 'index.html';
 
-  if (page === 'index.html' || page === '') {
-    initIndexPage();
+  if (page === 'index.html') {
+    initIndexPage(runSetup);
   } else if (page === 'workers.html') {
-    initWorkersPage();
+    initWorkersPage(runSetup);
   } else if (page === 'daily-log.html') {
-    initDailyLogPage();
+    initDailyLogPage(runSetup);
   } else if (page === 'report.html') {
-    initReportPage();
+    initReportPage(runSetup);
   }
 }
 
@@ -140,18 +140,13 @@ function initIndexPage() {
   renderLogs(logs);
 }
 
-function initWorkersPage() {
-  console.log("Initializing Workers Page");
-  const form = document.getElementById('worker-form');
-  const tbody = document.getElementById('workers-table-body');
-  const mobileList = document.getElementById('workers-mobile-list');
-  const countSpan = document.getElementById('worker-count');
-  const btnCancel = document.getElementById('btn-cancel-edit');
-  const formTitle = document.getElementById('form-title');
-
-  if (!form) return;
-
+function initWorkersPage(runSetup = true) {
   function renderWorkers() {
+    const tbody = document.getElementById('workers-table-body');
+    const mobileList = document.getElementById('workers-mobile-list');
+    const countSpan = document.getElementById('worker-count');
+    if (!tbody || !mobileList || !countSpan) return;
+
     tbody.innerHTML = '';
     mobileList.innerHTML = '';
     countSpan.textContent = `${workers.length} คน`;
@@ -204,6 +199,13 @@ function initWorkersPage() {
     });
   }
 
+  if (runSetup) {
+    console.log("Setting up Workers Page events");
+    const form = document.getElementById('worker-form');
+    const btnCancel = document.getElementById('btn-cancel-edit');
+    const formTitle = document.getElementById('form-title');
+    if (!form) return;
+
   function resetForm() {
     form.reset();
     document.getElementById('worker-id').value = '';
@@ -245,7 +247,7 @@ function initWorkersPage() {
   });
 
   btnCancel.addEventListener('click', resetForm);
-
+  }
   renderWorkers();
 }
 
