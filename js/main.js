@@ -25,18 +25,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   hideLoadingOverlay();
 });
 
-function routePage() {
+function routePage(runSetup) {
   const path = window.location.pathname;
   const page = path.split("/").pop() || 'index.html';
 
   if (page === 'index.html') {
-    initIndexPage(runSetup);
+    initIndexPage(runSetup); // Pass the parameter down
   } else if (page === 'workers.html') {
-    initWorkersPage(runSetup);
+    initWorkersPage(runSetup); // Pass the parameter down
   } else if (page === 'daily-log.html') {
-    initDailyLogPage(runSetup);
+    initDailyLogPage(runSetup); // Pass the parameter down
   } else if (page === 'report.html') {
-    initReportPage(runSetup);
+    initReportPage(runSetup); // Pass the parameter down
   }
 }
 
@@ -140,7 +140,7 @@ function initIndexPage() {
   renderLogs(logs);
 }
 
-function initWorkersPage(runSetup = true) {
+function initWorkersPage(runSetup) {
   function renderWorkers() {
     const tbody = document.getElementById('workers-table-body');
     const mobileList = document.getElementById('workers-mobile-list');
@@ -251,9 +251,8 @@ function initWorkersPage(runSetup = true) {
   renderWorkers();
 }
 
+function initDailyLogPage(runSetup) {
 
-
-function initDailyLogPage() {
   console.log("Initializing Daily Log Page");
   document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
   const container = document.getElementById('workers-daily-container');
@@ -262,7 +261,7 @@ function initDailyLogPage() {
   const imageInput = document.getElementById('image-files');
   const previewContainer = document.getElementById('image-preview-container');
 
-  if (!form) return;
+  if (runSetup && !form) return;
 
   function renderDailyWorkers() {
     container.innerHTML = '';
@@ -316,6 +315,8 @@ function initDailyLogPage() {
     });
   }
 
+  if (runSetup) {
+    console.log("Setting up Daily Log Page events");
   imageInput.addEventListener('change', () => {
     previewContainer.innerHTML = '';
     Array.from(imageInput.files).forEach(file => {
@@ -398,11 +399,11 @@ function initDailyLogPage() {
       // Error is already shown by apiCall
     }
   });
-
+  }
   renderDailyWorkers();
 }
 
-function initReportPage() {
+function initReportPage(runSetup) {
   console.log("Initializing Report Page");
   const projectFilterBtn = document.getElementById('project-filter-btn');
   const projectFilterDropdown = document.getElementById('project-filter-dropdown');
@@ -414,7 +415,7 @@ function initReportPage() {
   const btnExport = document.getElementById('btn-export-excel');
   const reportTbody = document.getElementById('report-table-body');
 
-  if (!projectFilterBtn) return;
+  if (runSetup && !projectFilterBtn) return;
 
   // --- Setup Project Filter Dropdown ---
   const uniqueProjects = [...new Set(logs.map(l => l.site).filter(Boolean))];
@@ -430,6 +431,8 @@ function initReportPage() {
     projectFilterOptions.insertAdjacentHTML('beforeend', optionHtml);
   });
 
+  if (runSetup) {
+    console.log("Setting up Report Page events");
   const toggleDropdown = () => projectFilterDropdown.classList.toggle('hidden');
   projectFilterBtn.addEventListener('click', toggleDropdown);
   projectFilterCloseBtn.addEventListener('click', toggleDropdown);
@@ -559,6 +562,7 @@ function initReportPage() {
     XLSX.utils.book_append_sheet(workbook, worksheet, "สรุปงวดค่าแรง");
     XLSX.writeFile(workbook, `สรุปงวดงาน_${new Date().toISOString().split('T')[0]}.xlsx`);
   });
+  }
 }
 
 // --- Business Logic Helpers ---
