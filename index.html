@@ -39,16 +39,12 @@
   <main class="max-w-6xl mx-auto px-4 py-6 flex-grow w-full">
     
     <!-- Quick Navigation (ปุ่มลัดนำทางสำหรับทุกหน้าจอ) -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
       <a href="daily-log.html" class="flex flex-col items-center justify-center p-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl shadow transition-all duration-200">
         <i class="fa-solid fa-calendar-day text-2xl mb-2"></i>
         <span class="font-medium text-sm">บันทึกงานประจำวัน</span>
       </a>
-      <a href="multi-log.html" class="flex flex-col items-center justify-center p-4 bg-cyan-500 hover:bg-cyan-600 text-white rounded-2xl shadow transition-all duration-200">
-        <i class="fa-solid fa-calendar-days text-2xl mb-2"></i>
-        <span class="font-medium text-sm">บันทึกงานหลายวัน</span>
-      </a>
-      <a href="report.html" class="flex flex-col items-center justify-center p-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl shadow transition-all duration-200">
+      <a href="report.html" class="flex flex-col items-center justify-center p-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl shadow transition-all duration-200 sm:col-start-2">
         <i class="fa-solid fa-file-invoice-dollar text-2xl mb-2"></i>
         <span class="font-medium text-sm">รายงาน & สรุปงวด</span>
       </a>
@@ -149,10 +145,6 @@
       <i class="fa-solid fa-calendar-day text-lg"></i>
       <span class="text-[10px] mt-1 font-medium">รายวัน</span>
     </a>
-    <a href="multi-log.html" class="flex flex-col items-center text-slate-400 hover:text-blue-500">
-      <i class="fa-solid fa-calendar-days text-lg"></i>
-      <span class="text-[10px] mt-1 font-medium">หลายวัน</span>
-    </a>
     <a href="report.html" class="flex flex-col items-center text-slate-400 hover:text-blue-500">
       <i class="fa-solid fa-file-invoice-dollar text-lg"></i>
       <span class="text-[10px] mt-1 font-medium">รายงาน</span>
@@ -160,6 +152,7 @@
   </nav>
 
   <!-- เชื่อมโยงสคริปต์หลักของแอป -->
-  <script src="js/app.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>

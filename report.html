@@ -48,11 +48,20 @@
       </h2>
       
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
+        <div class="relative">
           <label class="block text-sm font-medium text-slate-600 mb-1">เลือกโครงการ / ไซต์งาน</label>
-          <select id="filter-project" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
-            <option value="all">-- โครงการทั้งหมด --</option>
-          </select>
+          <button id="project-filter-btn" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-left text-sm flex justify-between items-center">
+            <span id="project-filter-text">-- โครงการทั้งหมด --</span>
+            <i class="fa-solid fa-chevron-down text-slate-400"></i>
+          </button>
+          <div id="project-filter-dropdown" class="hidden absolute top-full left-0 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg p-4 z-10 max-h-60 overflow-y-auto">
+            <div class="space-y-2" id="project-filter-options">
+              <!-- Checkboxes will be inserted here by JavaScript -->
+            </div>
+            <div class="mt-3 pt-3 border-t border-slate-100">
+              <button id="project-filter-close-btn" class="w-full text-sm text-blue-600 font-medium">ปิด</button>
+            </div>
+          </div>
         </div>
         <div>
           <label class="block text-sm font-medium text-slate-600 mb-1">ตั้งแต่วันที่</label>
@@ -140,10 +149,6 @@
       <i class="fa-solid fa-calendar-day text-lg"></i>
       <span class="text-[10px] mt-1 font-medium">รายวัน</span>
     </a>
-    <a href="multi-log.html" class="flex flex-col items-center text-slate-400 hover:text-blue-500">
-      <i class="fa-solid fa-calendar-days text-lg"></i>
-      <span class="text-[10px] mt-1 font-medium">หลายวัน</span>
-    </a>
     <a href="report.html" class="flex flex-col items-center text-blue-600">
       <i class="fa-solid fa-file-invoice-dollar text-lg"></i>
       <span class="text-[10px] mt-1 font-medium">รายงาน</span>
@@ -151,6 +156,7 @@
   </nav>
 
   <!-- เชื่อมโยงสคริปต์หลัก -->
-  <script src="js/app.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/main.js"></script>
 </body>
 </html>
