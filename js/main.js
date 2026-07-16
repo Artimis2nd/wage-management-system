@@ -91,7 +91,10 @@ function initIndexPage(runSetup) {
         <td class="py-3 px-4 text-center">${workerCount} คน</td>
         <td class="py-3 px-4 text-right font-semibold text-emerald-600">฿${totalWage.toFixed(2)}</td>
         <td class="py-3 px-4 text-center">
-          <button onclick="deleteLog('${log.id}')" class="p-1.5 text-slate-400 hover:bg-rose-100 hover:text-rose-600 rounded-lg transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+          <div class="flex justify-center gap-2">
+            <button onclick="editLog('${log.id}')" class="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
+            <button onclick="deleteLog('${log.id}')" class="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
         </td>
       `;
       tableBody.appendChild(tr);
@@ -108,8 +111,9 @@ function initIndexPage(runSetup) {
           <span class="text-sm font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-lg">฿${totalWage.toFixed(2)}</span>
         </div>
         <div class="flex justify-between items-center pt-2 border-t border-slate-100">
-          <span class="text-xs text-slate-400">${workerCount} คนทำงาน</span>
-          <button onclick="deleteLog('${log.id}')" class="text-xs bg-rose-50 text-rose-600 px-3 py-1.5 rounded-lg font-medium"><i class="fa-solid fa-trash-can"></i> ลบรายการนี้</button>
+          <span class="text-xs text-slate-400">${workerCount} คน</span>
+          <button onclick="editLog('${log.id}')" class="text-xs bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg font-medium"><i class="fa-solid fa-pen-to-square"></i> แก้ไข</button>
+          <button onclick="deleteLog('${log.id}')" class="text-xs bg-rose-50 text-rose-600 px-3 py-1.5 rounded-lg font-medium"><i class="fa-solid fa-trash-can"></i> ลบ</button>
         </div>
       `;
       mobileList.appendChild(card);
@@ -249,12 +253,21 @@ function initWorkersPage(runSetup) {
 function initDailyLogPage(runSetup) {
 
   console.log("Initializing Daily Log Page");
-  document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
+  
+  // ตรวจสอบว่ามี ID ของใบงานถูกส่งมาเพื่อแก้ไขหรือไม่
+  const urlParams = new URLSearchParams(window.location.search);
+  const logIdToEdit = urlParams.get('id');
+
   const container = document.getElementById('workers-daily-container');
   const totalDisplay = document.getElementById('daily-total-display');
   const form = document.getElementById('daily-log-form');
   const imageInput = document.getElementById('image-files');
   const previewContainer = document.getElementById('image-preview-container');
+  const pageTitle = document.querySelector('header span');
+  const formTitle = document.querySelector('main h2');
+  const submitButton = form.querySelector('button[type="submit"]');
+
+  if (!form) return; // Exit if not on the correct page
 
   if (runSetup && !form) return;
 
@@ -307,6 +320,39 @@ function initDailyLogPage(runSetup) {
         </div>
       `;
       container.appendChild(row);
+    });
+  }
+
+  function populateFormForEdit(log) {
+    if (!log) return;
+    
+    // อัปเดต UI
+    pageTitle.textContent = 'แก้ไขใบงานประจำวัน';
+    formTitle.innerHTML = `<i class="fa-solid fa-edit text-amber-500"></i> <span>แก้ไขใบงาน #${log.id}</span>`;
+    submitButton.innerHTML = `<i class="fa-solid fa-save"></i> อัปเดตข้อมูล`;
+    submitButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+    submitButton.classList.add('bg-amber-500', 'hover:bg-amber-600');
+
+    // เติมข้อมูลลงในฟอร์ม
+    document.getElementById('log-date').value = log.date.split('T')[0];
+    document.getElementById('project-name').value = log.site;
+    document.getElementById('work-detail').value = log.detail;
+    document.getElementById('log-notes').value = log.notes;
+
+    // ติ๊กเลือกคนงานและเติมข้อมูลของแต่ละคน
+    log.details.forEach(det => {
+      const workerCheckbox = document.getElementById(`check-${det.workerId}`);
+      if (workerCheckbox) {
+        workerCheckbox.checked = true;
+        document.getElementById(`type-${det.workerId}`).value = det.workType;
+        toggleWorkTypeFields(det.workerId, false); // false to prevent recalculation yet
+        if (det.workType === 'daily') {
+          document.getElementById(`normal-${det.workerId}`).value = det.hours;
+          document.getElementById(`ot-${det.workerId}`).value = det.otHours;
+        } else {
+          document.getElementById(`flat-val-${det.workerId}`).value = det.maoAmount;
+        }
+      }
     });
   }
 
@@ -384,8 +430,16 @@ function initDailyLogPage(runSetup) {
     };
 
     try {
-      const newLog = await apiCall('addLog', logData);
-      logs.push(newLog);
+      if (logIdToEdit) {
+        // โหมดแก้ไข: ส่ง ID ไปด้วยและเรียก updateLog
+        logData.id = logIdToEdit;
+        const updatedLog = await apiCall('updateLog', logData);
+        const index = logs.findIndex(l => l.id === logIdToEdit);
+        if (index !== -1) logs[index] = updatedLog;
+      } else {
+        const newLog = await apiCall('addLog', logData);
+        logs.push(newLog);
+      }
     } catch (error) {
       // Error is already shown by apiCall
       // No need to do anything else, hideLoadingOverlay will be called in finally
@@ -400,6 +454,15 @@ function initDailyLogPage(runSetup) {
   });
   }
   renderDailyWorkers();
+
+  // ถ้าเป็นโหมดแก้ไข ให้เติมข้อมูลลงฟอร์ม
+  if (logIdToEdit) {
+    const logToEdit = logs.find(l => l.id === logIdToEdit);
+    populateFormForEdit(logToEdit);
+    calculateDailyTotal(); // คำนวณยอดรวมครั้งแรก
+  } else {
+    document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
+  }
 }
 
 function initReportPage(runSetup) {
@@ -630,7 +693,12 @@ window.deleteLog = function(id) {
     }
   });
 };
-window.toggleWorkTypeFields = function(workerId) {
+
+window.editLog = function(id) {
+  window.location.href = `daily-log.html?id=${id}`;
+};
+
+window.toggleWorkTypeFields = function(workerId, shouldCalculate = true) {
   const type = document.getElementById(`type-${workerId}`).value;
   const divNormal = document.getElementById(`div-normal-${workerId}`);
   const divOt = document.getElementById(`div-ot-${workerId}`);
@@ -640,7 +708,7 @@ window.toggleWorkTypeFields = function(workerId) {
   divOt.classList.toggle('hidden', type === 'flat');
   divFlat.classList.toggle('hidden', type !== 'flat');
   
-  calculateDailyTotal();
+  if (shouldCalculate) calculateDailyTotal();
 };
 
 window.calculateDailyTotal = function() {
