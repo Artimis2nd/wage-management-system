@@ -607,7 +607,6 @@ window.deleteWorker = function(id) {
       showLoadingOverlay('กำลังลบข้อมูล...');
       await apiCall('deleteWorker', { id });
       workers = workers.filter(w => w.id !== id);
-      saveToLocalStorage();
       routePage(); // Re-render the page
       Swal.fire('ลบสำเร็จ!', 'ลบรายชื่อคนงานออกจากระบบแล้ว', 'success');
     }
@@ -627,7 +626,6 @@ window.deleteLog = function(id) {
       showLoadingOverlay('กำลังลบใบงาน...');
       await apiCall('deleteLog', { id });
       logs = logs.filter(l => l.id !== id);
-      saveToLocalStorage();
       routePage(); // Re-render the page
       Swal.fire('ลบสำเร็จ!', 'ลบใบงานออกจากระบบแล้ว', 'success');
     }
