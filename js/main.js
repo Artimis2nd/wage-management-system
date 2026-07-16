@@ -275,7 +275,9 @@ function initDailyLogPage(runSetup) {
 
   if (runSetup && !form) return;
 
-  // รูปภาพเดิมที่ยังเก็บไว้ (สามารถกดลบออกได้ทีละรูปก่อนบันทึก)
+  // originalImages = รูปที่เคยบันทึกไว้ตอนโหลดหน้า (ใช้เทียบว่าอันไหนถูกลบออกไปจริง)
+  // keptImages = สถานะปัจจุบันหลังผู้ใช้อาจกดลบบางรูปออก
+  let originalImages = [];
   let keptImages = [];
 
   function renderExistingImages() {
@@ -384,7 +386,8 @@ function initDailyLogPage(runSetup) {
     });
 
     // แสดงรูปภาพที่เคยบันทึกไว้แล้ว พร้อมปุ่มลบทีละรูป
-    keptImages = [...(log.images || [])];
+    originalImages = [...(log.images || [])];
+    keptImages = [...originalImages];
     if (existingImagesSection) existingImagesSection.classList.remove('hidden');
     renderExistingImages();
   }
@@ -464,9 +467,11 @@ function initDailyLogPage(runSetup) {
     };
 
     if (logIdToEdit) {
-      // โหมดแก้ไข: แยกรูปเดิมที่ยังเก็บไว้ (keptImageUrls) ออกจากรูปใหม่ที่เพิ่งเลือก (newImages)
-      // เพื่อไม่ให้รูปเดิมที่ไม่ได้ลบหายไปตอนอัปเดต
-      logData.keptImageUrls = keptImages;
+      // โหมดแก้ไข: ส่งเฉพาะ "รายการรูปที่ถูกลบออกจริง" (removedImageUrls)
+      // แทนที่จะส่ง "รายการที่เก็บไว้" — เพื่อไม่ให้เกิดกรณีลิสต์ว่างแล้วเข้าใจผิดว่าลบทุกรูป
+      // ถ้าไม่ได้กดลบรูปไหนเลย removedImageUrls จะเป็น [] และฝั่งเซิร์ฟเวอร์จะไม่ลบอะไรเป็นค่าเริ่มต้น
+      const removedImageUrls = originalImages.filter(url => keptImages.indexOf(url) === -1);
+      logData.removedImageUrls = removedImageUrls;
       logData.newImages = imagesData;
     } else {
       logData.images = imagesData;
