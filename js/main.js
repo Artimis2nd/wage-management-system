@@ -265,6 +265,8 @@ function initDailyLogPage(runSetup) {
   const form = document.getElementById('daily-log-form');
   const imageInput = document.getElementById('image-files');
   const previewContainer = document.getElementById('image-preview-container');
+  const existingImagesSection = document.getElementById('existing-images-section');
+  const existingImagesContainer = document.getElementById('existing-images-container');
   const pageTitle = document.querySelector('header span');
   const formTitle = document.querySelector('main h2');
   const submitButton = form.querySelector('button[type="submit"]');
@@ -272,6 +274,30 @@ function initDailyLogPage(runSetup) {
   if (!form) return; // Exit if not on the correct page
 
   if (runSetup && !form) return;
+
+  // รูปภาพเดิมที่ยังเก็บไว้ (สามารถกดลบออกได้ทีละรูปก่อนบันทึก)
+  let keptImages = [];
+
+  function renderExistingImages() {
+    if (!existingImagesContainer) return;
+    existingImagesContainer.innerHTML = '';
+    keptImages.forEach((url, index) => {
+      const div = document.createElement('div');
+      div.className = "relative rounded-xl overflow-hidden border border-slate-200 aspect-square group";
+      div.innerHTML = `
+        <img src="${toDriveThumbnail(url)}" class="object-cover w-full h-full" loading="lazy">
+        <button type="button" data-index="${index}" class="btn-remove-existing-image absolute top-1 right-1 w-6 h-6 flex items-center justify-center rounded-full bg-rose-600 text-white text-xs shadow hover:bg-rose-700">✕</button>
+      `;
+      existingImagesContainer.appendChild(div);
+    });
+    existingImagesContainer.querySelectorAll('.btn-remove-existing-image').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.index, 10);
+        keptImages.splice(idx, 1);
+        renderExistingImages();
+      });
+    });
+  }
 
   function renderDailyWorkers() {
     container.innerHTML = '';
@@ -356,6 +382,11 @@ function initDailyLogPage(runSetup) {
         }
       }
     });
+
+    // แสดงรูปภาพที่เคยบันทึกไว้แล้ว พร้อมปุ่มลบทีละรูป
+    keptImages = [...(log.images || [])];
+    if (existingImagesSection) existingImagesSection.classList.remove('hidden');
+    renderExistingImages();
   }
 
   if (runSetup) {
@@ -424,19 +455,26 @@ function initDailyLogPage(runSetup) {
     const imagesData = await Promise.all(imagePromises);
 
     const logData = {
-      id: 'L' + Date.now(),
+      id: logIdToEdit || ('L' + Date.now()),
       date: document.getElementById('log-date').value,
       site: document.getElementById('project-name').value.trim(),
       detail: document.getElementById('work-detail').value.trim(),
       notes: document.getElementById('log-notes').value.trim(),
-      images: imagesData,
       details: selectedDetails
     };
+
+    if (logIdToEdit) {
+      // โหมดแก้ไข: แยกรูปเดิมที่ยังเก็บไว้ (keptImageUrls) ออกจากรูปใหม่ที่เพิ่งเลือก (newImages)
+      // เพื่อไม่ให้รูปเดิมที่ไม่ได้ลบหายไปตอนอัปเดต
+      logData.keptImageUrls = keptImages;
+      logData.newImages = imagesData;
+    } else {
+      logData.images = imagesData;
+    }
 
     try {
       if (logIdToEdit) {
         // โหมดแก้ไข: ส่ง ID ไปด้วยและเรียก updateLog
-        logData.id = logIdToEdit;
         const updatedLog = await apiCall('updateLog', logData);
         const index = logs.findIndex(l => l.id === logIdToEdit);
         if (index !== -1) logs[index] = updatedLog;
@@ -640,6 +678,14 @@ function calculateNetWage(rawWage, type, workerName) {
     return rawWage; // ไม่หัก 20%
   }
   return rawWage * 0.8; // หัก 20%
+}
+
+// แปลงลิงก์ Google Drive (เช่น .../file/d/ID/view) ให้เป็นลิงก์รูปที่แสดงผลตรงๆ ได้ในแท็ก <img>
+function toDriveThumbnail(url) {
+  if (!url) return url;
+  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  const fileId = match ? match[1] : null;
+  return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : url;
 }
 
 function calculateDeduction(rawWage, type, workerName) {
