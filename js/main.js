@@ -685,14 +685,6 @@ function calculateNetWage(rawWage, type, workerName) {
   return rawWage * 0.8; // หัก 20%
 }
 
-// แปลงลิงก์ Google Drive (เช่น .../file/d/ID/view) ให้เป็นลิงก์รูปที่แสดงผลตรงๆ ได้ในแท็ก <img>
-function toDriveThumbnail(url) {
-  if (!url) return url;
-  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-  const fileId = match ? match[1] : null;
-  return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : url;
-}
-
 function calculateDeduction(rawWage, type, workerName) {
   if (type === 'flat' || (workerName && workerName.includes('เฟิร์น'))) {
     return 0; // ไม่มีส่วนหัก
@@ -794,3 +786,11 @@ window.calculateDailyTotal = function() {
   });
   document.getElementById('daily-total-display').textContent = `฿${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 };
+
+// แปลงลิงก์ Google Drive (เช่น .../file/d/ID/view) ให้เป็นลิงก์รูปที่แสดงผลตรงๆ ได้ในแท็ก <img>
+function toDriveThumbnail(url) {
+  if (!url) return url;
+  const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+  const fileId = match ? match[1] : null;
+  return fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w400` : url;
+}
