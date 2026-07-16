@@ -52,7 +52,7 @@ function hideLoadingOverlay() {
 
 // --- PAGE INITIALIZERS ---
 
-function initIndexPage() {
+function initIndexPage(runSetup) {
   const totalWorkersEl = document.getElementById('dash-total-workers');
   const totalLogsEl = document.getElementById('dash-total-logs');
   const totalWagesEl = document.getElementById('dash-total-wages');
@@ -60,6 +60,8 @@ function initIndexPage() {
   const mobileList = document.getElementById('logs-mobile-list');
   const searchInput = document.getElementById('search-logs');
   const refreshBtn = document.getElementById('btn-refresh');
+  
+  if (!totalWorkersEl) return; // Exit if not on the index page
 
   function renderLogs(logsToRender) {
     if (!tableBody || !mobileList) return;
@@ -119,15 +121,16 @@ function initIndexPage() {
   let sumNet = logs.reduce((total, log) => total + log.details.reduce((subTotal, det) => subTotal + (det.netWage || 0), 0), 0);
   if (totalWagesEl) totalWagesEl.textContent = `฿${sumNet.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
   
-  if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
-      const searchTerm = e.target.value.toLowerCase();
-      const filtered = logs.filter(l => (l.site && l.site.toLowerCase().includes(searchTerm)) || (l.detail && l.detail.toLowerCase().includes(searchTerm)));
-      renderLogs(filtered);
-    });
+  if (runSetup) {
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const filtered = logs.filter(l => (l.site && l.site.toLowerCase().includes(searchTerm)) || (l.detail && l.detail.toLowerCase().includes(searchTerm)));
+        renderLogs(filtered);
+      });
+    }
+    if (refreshBtn) refreshBtn.addEventListener('click', () => window.location.reload());
   }
-
-  if (refreshBtn) refreshBtn.addEventListener('click', () => window.location.reload());
 
   renderLogs(logs);
 }
