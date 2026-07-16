@@ -525,9 +525,6 @@ function initReportPage(runSetup) {
   // Exit if not on the report page
   if (!btnApply) return;
 
-  if (runSetup) {
-    console.log("Setting up Report Page events");
-
   function processReportData() {
     const startFilter = document.getElementById('filter-start-date').value;
     const endFilter = document.getElementById('filter-end-date').value;
@@ -595,6 +592,9 @@ function initReportPage(runSetup) {
     });
   }
 
+  if (runSetup) {
+    console.log("Setting up Report Page events");
+
   btnApply.addEventListener('click', processReportData);
   btnClear.addEventListener('click', () => {
     document.getElementById('filter-start-date').value = '';
@@ -631,6 +631,8 @@ function initReportPage(runSetup) {
     XLSX.writeFile(workbook, `สรุปงวดงาน_${new Date().toISOString().split('T')[0]}.xlsx`);
   });
   }
+
+  processReportData(); // เรียกใช้ฟังก์ชันเพื่อแสดงข้อมูลทั้งหมดในครั้งแรกที่โหลดหน้า
 }
 
 // --- Business Logic Helpers ---
