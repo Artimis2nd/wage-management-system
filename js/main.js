@@ -679,19 +679,21 @@ function initReportPage(runSetup) {
 
 // --- Business Logic Helpers ---
 function calculateNetWage(rawWage, type, workerName) {
+  // ยอดสุทธิ = ค่าแรงดิบ + โบนัส
+  // ถ้าเป็นงานเหมา หรือ คนชื่อ 'เฟิร์น' จะไม่มีโบนัส
   if (type === 'flat' || (workerName && workerName.includes('เฟิร์น'))) {
-    return rawWage; // ไม่หัก 20%
+    return rawWage;
   }
-  return rawWage * 0.8; // หัก 20%
+  return rawWage * 1.2; // เพิ่มโบนัส 20%
 }
 
 function calculateDeduction(rawWage, type, workerName) {
+  // ส่วนนี้คือยอดโบนัส 20% (ไม่ใช่ยอดหัก)
   if (type === 'flat' || (workerName && workerName.includes('เฟิร์น'))) {
-    return 0; // ไม่มีส่วนหัก
+    return 0; // ไม่มีโบนัส
   }
-  return rawWage * 0.2; // ยอดที่โดนหัก 20%
+  return rawWage * 0.2; // ยอดโบนัส 20%
 }
-// --- Global Functions for inline onclick ---
 
 window.editWorker = function(id) {
   const worker = workers.find(w => w.id === id);
