@@ -55,7 +55,7 @@
     </div>
 
     <!-- Dashboard Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
         <div>
           <p class="text-sm text-slate-500">จำนวนคนงานทั้งหมด</p>
@@ -73,6 +73,17 @@
         </div>
         <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
           <i class="fa-solid fa-file-lines text-xl"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
+        <div>
+          <p class="text-sm text-slate-500">ยอดค่าแรงดิบสะสม</p>
+          <h3 id="dash-total-raw-wages" class="text-3xl font-bold mt-1 text-slate-800">฿0.00</h3>
+          <p class="text-xs text-slate-400">(ไม่รวม +20%)</p>
+        </div>
+        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+          <i class="fa-solid fa-wallet text-xl"></i>
         </div>
       </div>
 

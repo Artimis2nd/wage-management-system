@@ -106,6 +106,7 @@ function initIndexPage(runSetup) {
   const totalWorkersEl = document.getElementById('dash-total-workers');
   const totalLogsEl = document.getElementById('dash-total-logs');
   const totalWagesEl = document.getElementById('dash-total-wages');
+  const totalRawWagesEl = document.getElementById('dash-total-raw-wages');
   const tableBody = document.getElementById('logs-table-body');
   const mobileList = document.getElementById('logs-mobile-list');
   const searchInput = document.getElementById('search-logs');
@@ -174,7 +175,12 @@ function initIndexPage(runSetup) {
 
   if (totalWorkersEl) totalWorkersEl.textContent = `${workers.length} คน`;
   if (totalLogsEl) totalLogsEl.textContent = `${logs.length} รายการ`;
-  let sumNet = logs.reduce((total, log) => total + log.details.reduce((subTotal, det) => subTotal + (det.netWage || 0), 0), 0);
+  
+  // คำนวณยอดรวมทั้งสองแบบ: ยอดดิบ (originalWage) และยอดสุทธิ (netWage)
+  const sumRaw = logs.reduce((total, log) => total + log.details.reduce((subTotal, det) => subTotal + (det.originalWage || 0), 0), 0);
+  const sumNet = logs.reduce((total, log) => total + log.details.reduce((subTotal, det) => subTotal + (det.netWage || 0), 0), 0);
+  
+  if (totalRawWagesEl) totalRawWagesEl.textContent = `฿${sumRaw.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
   if (totalWagesEl) totalWagesEl.textContent = `฿${sumNet.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
   
   if (runSetup) {
