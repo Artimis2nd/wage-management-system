@@ -61,6 +61,8 @@ function routePage(runSetup) {
     initReportPage(runSetup); // Pass the parameter down
   } else if (page === 'pivot-report.html') {
     initPivotReportPage(runSetup);
+  } else if (page === 'log-print.html') {
+    initLogPrintPage();
   }
 }
 
@@ -113,14 +115,16 @@ function initIndexPage(runSetup) {
   const mobileList = document.getElementById('logs-mobile-list');
   const searchInput = document.getElementById('search-logs');
   const refreshBtn = document.getElementById('btn-refresh');
+  const printSelectedBtn = document.getElementById('btn-print-selected');
+  const printSelectedMobileBtn = document.getElementById('btn-print-selected-mobile');
   
   if (!totalWorkersEl) return; // Exit if not on the index page
 
   function renderLogs(logsToRender) {
     if (!tableBody || !mobileList) return;
 
-    tableBody.innerHTML = '';
-    mobileList.innerHTML = '';
+    tableBody.innerHTML = ''; // Clear only table body
+    mobileList.innerHTML = mobileList.querySelector('button') ? mobileList.querySelector('button').outerHTML : ''; // Keep the button
 
     if (logsToRender.length === 0) {
       const emptyHtml = `<td colspan="7" class="text-center py-8 text-slate-400">ไม่พบรายการบันทึก</td>`;
@@ -138,6 +142,7 @@ function initIndexPage(runSetup) {
       const tr = document.createElement('tr');
       tr.className = "hover:bg-slate-50 transition-colors";
       tr.innerHTML = `
+        <td class="py-3 px-2 text-center"><input type="checkbox" class="log-checkbox" data-id="${log.id}"></td>
         <td class="py-3 px-4">${new Date(log.date).toLocaleDateString('th-TH')}</td>
         <td class="py-3 px-4 font-medium text-slate-700">${log.site || '-'}</td>
         <td class="py-3 px-4 text-slate-500">${log.detail || '-'}</td>
@@ -156,7 +161,10 @@ function initIndexPage(runSetup) {
       const card = document.createElement('div');
       card.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2";
       card.innerHTML = `
-        <div class="flex justify-between items-start">
+        <div class="flex justify-between items-start gap-4">
+          <div class="flex-shrink-0 pt-1">
+            <input type="checkbox" class="log-checkbox w-5 h-5" data-id="${log.id}">
+          </div>
           <div>
             <p class="text-xs text-slate-500">${new Date(log.date).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
             <h4 class="font-bold text-slate-800 text-sm mt-1">${log.site || 'ไม่มีชื่อโครงการ'}</h4>
@@ -197,10 +205,115 @@ function initIndexPage(runSetup) {
         renderLogs(filtered);
       });
     }
+
+    const handlePrint = () => {
+      const selectedIds = Array.from(document.querySelectorAll('.log-checkbox:checked')).map(cb => cb.dataset.id);
+      if (selectedIds.length === 0) {
+        Swal.fire('ไม่ได้เลือกรายการ', 'กรุณาติ๊กเลือกใบงานที่ต้องการพิมพ์อย่างน้อย 1 รายการ', 'warning');
+        return;
+      }
+      // Store selected IDs in sessionStorage to be read by the new page
+      sessionStorage.setItem('selectedLogIds', JSON.stringify(selectedIds));
+      // Open the print page in a new tab
+      window.open('log-print.html', '_blank');
+    };
+
+    if (printSelectedBtn) printSelectedBtn.addEventListener('click', handlePrint);
+    if (printSelectedMobileBtn) printSelectedMobileBtn.addEventListener('click', handlePrint);
+
     if (refreshBtn) refreshBtn.addEventListener('click', () => window.location.reload());
+
+    const selectAllCheckbox = document.getElementById('select-all-logs');
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener('change', (e) => {
+        document.querySelectorAll('.log-checkbox').forEach(cb => {
+          cb.checked = e.target.checked;
+        });
+      });
+    }
   }
 
   renderLogs(logs);
+}
+
+function initLogPrintPage() {
+  const selectedIds = JSON.parse(sessionStorage.getItem('selectedLogIds') || '[]');
+  const printContainer = document.getElementById('print-container');
+  const template = document.getElementById('log-page-template');
+
+  if (!printContainer || !template || selectedIds.length === 0) {
+    printContainer.innerHTML = '<div class="page"><p class="text-center text-red-500">ไม่พบข้อมูลใบงานที่เลือกสำหรับพิมพ์</p></div>';
+    return;
+  }
+
+  selectedIds.forEach(logId => {
+    const log = logs.find(l => l.id === logId);
+    if (!log) return;
+
+    const pageClone = template.content.cloneNode(true);
+    const pageElement = pageClone.querySelector('.page');
+
+    // Populate header
+    pageElement.querySelector('[data-field="date"]').textContent = new Date(log.date).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+    pageElement.querySelector('[data-field="supervisor"]').textContent = log.notes || '-';
+    pageElement.querySelector('[data-field="site"]').textContent = log.site || '-';
+    pageElement.querySelector('[data-field="detail"]').textContent = log.detail || '-';
+
+    // Populate worker table
+    const tableBody = pageElement.querySelector('[data-field="worker-table-body"]');
+    let totalDaily = 0, totalFlat = 0, totalBonus = 0, grandTotal = 0;
+
+    log.details.forEach(det => {
+      const worker = workers.find(w => w.id === det.workerId);
+      const baseRate = worker ? worker.rate : 0;
+      const otWage = det.workType === 'daily' ? (det.otHours * (baseRate / 8 * 2)) : 0;
+
+      let workDuration = '-';
+      if (det.workType === 'daily') {
+        workDuration = `${det.hours} ชม.` + (det.otHours > 0 ? ` (OT: ${det.otHours} ชม.)` : '');
+      } else {
+        workDuration = 'เหมา';
+      }
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="p-2 border border-slate-300">${det.workerName}</td>
+        <td class="p-2 border border-slate-300 text-right">${baseRate.toFixed(2)}</td>
+        <td class="p-2 border border-slate-300 text-center">${workDuration}</td>
+        <td class="p-2 border border-slate-300 text-right">${det.originalWage.toFixed(2)}</td>
+        <td class="p-2 border border-slate-300 text-right text-sky-600">${det.deduction > 0 ? `+${det.deduction.toFixed(2)}` : '-'}</td>
+        <td class="p-2 border border-slate-300 text-right text-purple-600">${det.workType === 'flat' ? det.originalWage.toFixed(2) : '-'}</td>
+        <td class="p-2 border border-slate-300 text-right text-amber-600">${otWage > 0 ? otWage.toFixed(2) : '-'}</td>
+        <td class="p-2 border border-slate-300 text-right font-bold">${det.netWage.toFixed(2)}</td>
+      `;
+      tableBody.appendChild(tr);
+
+      // Calculate summaries
+      if (det.workType === 'daily') totalDaily += det.originalWage;
+      if (det.workType === 'flat') totalFlat += det.originalWage;
+      totalBonus += det.deduction;
+      grandTotal += det.netWage;
+    });
+
+    // Populate summary
+    pageElement.querySelector('[data-field="summary-daily"]').textContent = `฿${totalDaily.toFixed(2)}`;
+    pageElement.querySelector('[data-field="summary-flat"]').textContent = `฿${totalFlat.toFixed(2)}`;
+    pageElement.querySelector('[data-field="summary-bonus"]').textContent = `฿${totalBonus.toFixed(2)}`;
+    pageElement.querySelector('[data-field="summary-grand-total"]').textContent = `฿${grandTotal.toFixed(2)}`;
+
+    // Populate image grid
+    const imageGrid = pageElement.querySelector('[data-field="image-grid"]');
+    if (log.images && log.images.length > 0) {
+      log.images.slice(0, 6).forEach(url => { // Limit to 6 images
+        const imgContainer = document.createElement('div');
+        imgContainer.className = 'aspect-[4/3] bg-slate-100 rounded overflow-hidden border';
+        imgContainer.innerHTML = `<img src="${toDriveThumbnail(url)}" class="w-full h-full object-cover">`;
+        imageGrid.appendChild(imgContainer);
+      });
+    }
+
+    printContainer.appendChild(pageElement);
+  });
 }
 
 function initWorkersPage(runSetup) {
@@ -426,7 +539,13 @@ function initDailyLogPage(runSetup) {
     submitButton.classList.add('bg-amber-500', 'hover:bg-amber-600');
 
     // เติมข้อมูลลงในฟอร์ม
-    document.getElementById('log-date').value = log.date.split('T')[0];
+    // แก้ไขปัญหา Timezone: แปลงวันที่จาก ISO String เป็น Date object ก่อน
+    // เพื่อให้แน่ใจว่าวันที่ที่แสดงผลจะตรงกับโซนเวลาของผู้ใช้
+    const localDate = new Date(log.date);
+    const year = localDate.getFullYear();
+    const month = String(localDate.getMonth() + 1).padStart(2, '0');
+    const day = String(localDate.getDate()).padStart(2, '0');
+    document.getElementById('log-date').value = `${year}-${month}-${day}`;
     document.getElementById('project-name').value = log.site;
     document.getElementById('work-detail').value = log.detail;
     document.getElementById('log-notes').value = log.notes;
@@ -458,6 +577,22 @@ function initDailyLogPage(runSetup) {
   if (runSetup) {
     console.log("Setting up Daily Log Page events");
   imageInput.addEventListener('change', () => {
+    const newFilesCount = imageInput.files.length;
+    const existingFilesCount = keptImages.length;
+    const totalFiles = newFilesCount + existingFilesCount;
+
+    if (totalFiles > 6) {
+      Swal.fire(
+        'เลือกรูปภาพเกินกำหนด',
+        `คุณสามารถมีรูปภาพได้สูงสุด 6 รูป (ปัจจุบันมี ${existingFilesCount} รูป, เลือกเพิ่มได้อีก ${6 - existingFilesCount} รูป)`,
+        'warning'
+      );
+      // Clear the new file selection to prevent upload
+      imageInput.value = ''; 
+      previewContainer.innerHTML = '';
+      return;
+    }
+
     previewContainer.innerHTML = '';
     Array.from(imageInput.files).forEach(file => {
       const reader = new FileReader();
@@ -607,7 +742,7 @@ function initReportPage(runSetup) {
         const name = det.workerName;
         if (!workerSummary[name]) {
           const workerInfo = workers.find(w => w.id === det.workerId);
-          workerSummary[name] = { name, rate: workerInfo ? workerInfo.rate : 0, daysCount: 0, rawTotal: 0, typeText: new Set(), deductedTotal: 0, netTotal: 0 };
+          workerSummary[name] = { name, rate: workerInfo ? workerInfo.rate : 0, days: 0, hours: 0, otHours: 0, rawTotal: 0, flatTotal: 0, otWageTotal: 0, deductedTotal: 0, netTotal: 0 };
         }
 
         // ใช้ค่าที่คำนวณและบันทึกไว้แล้วจากตอนสร้างใบงานโดยตรง
@@ -616,11 +751,22 @@ function initReportPage(runSetup) {
         const ded = det.deduction || 0;
         const net = det.netWage || 0;
 
-        workerSummary[name].daysCount += (det.detailsText.includes("Timesheet") ? parseFloat(det.detailsText.replace(/[^0-9.]/g, '')) : 1);
+        if (det.workType === 'flat') {
+          workerSummary[name].days += 1;
+          workerSummary[name].flatTotal += raw;
+        } else { // daily
+          if (det.hours === 8 && det.otHours === 0) {
+            workerSummary[name].days += 1;
+          } else {
+            workerSummary[name].hours += det.hours;
+            workerSummary[name].otHours += det.otHours;
+          }
+          const hourlyRate = (workerSummary[name].rate || 0) / 8;
+          workerSummary[name].otWageTotal += (det.otHours * (hourlyRate * 2));
+        }
         workerSummary[name].rawTotal += raw;
         workerSummary[name].deductedTotal += ded; // ยอดโบนัสสะสมรายคน
         workerSummary[name].netTotal += net; // ยอดสุทธิสะสมรายคน
-        workerSummary[name].typeText.add(det.workType === 'flat' ? 'งานเหมา' : 'รายวัน');
 
         totalRaw += raw;
         if (ded > 0) totalSubject += raw; // ยอดที่นำไปคิดโบนัส คือยอดที่มีโบนัสเกิดขึ้นจริง
@@ -642,14 +788,26 @@ function initReportPage(runSetup) {
     }
 
     summaryArray.forEach(row => {
+      let workSummaryText = [];
+      if (row.days > 0) {
+        workSummaryText.push(`${row.days} วัน`);
+      }
+      if (row.hours > 0) {
+        workSummaryText.push(`${row.hours} ชม.`);
+      }
+      if (row.otHours > 0) {
+        workSummaryText.push(`(OT ${row.otHours} ชม.)`);
+      }
+
       const tr = document.createElement('tr');
       tr.className = "hover:bg-slate-50 transition-colors";
       tr.innerHTML = `
         <td class="py-3 px-4 font-bold text-slate-700">${row.name} <span class="font-normal text-slate-400 text-xs">(ค่าแรง ${row.rate.toFixed(2)} บาท)</span></td>
-        <td class="py-3 px-4 text-right">${row.daysCount.toFixed(1)} วัน</td>
+        <td class="py-3 px-4 text-right">${workSummaryText.join(' - ') || '0'}</td>
         <td class="py-3 px-4 text-right">฿${row.rawTotal.toFixed(2)}</td>
-        <td class="py-3 px-4 text-right text-xs"><span class="bg-slate-100 px-2 py-1 rounded">${[...row.typeText].join(', ')}</span></td>
         <td class="py-3 px-4 text-right text-sky-600 font-medium">+฿${row.deductedTotal.toFixed(2)}</td>
+        <td class="py-3 px-4 text-right text-purple-600 font-medium">${row.flatTotal > 0 ? `฿${row.flatTotal.toFixed(2)}` : '-'}</td>
+        <td class="py-3 px-4 text-right text-amber-600 font-medium">${row.otWageTotal > 0 ? `฿${row.otWageTotal.toFixed(2)}` : '-'}</td>
         <td class="py-3 px-4 text-right font-bold text-emerald-600">฿${row.netTotal.toFixed(2)}</td>
       `;
       reportTbody.appendChild(tr);
@@ -769,10 +927,10 @@ function initPivotReportPage(runSetup) {
 
     // --- Table Header ---
     tableHTML += `<thead><tr class="bg-slate-100">`;
-    tableHTML += `<th class="py-2 px-2 border border-slate-200 text-center text-[10px]" style="width: 50px;">ลำดับ</th>`;
-    tableHTML += `<th class="py-2 px-2 border border-slate-200 text-[10px]" style="width: 90px;">วันที่</th>`;
-    tableHTML += `<th class="py-2 px-2 border border-slate-200" style="min-width: 130px;">ไซต์งาน / โครงการ</th>`;
-    tableHTML += `<th class="py-2 px-2 border border-slate-200 min-w-[250px]">รายละเอียดงาน</th>`;
+    tableHTML += `<th class="py-2 px-2 border border-slate-200 text-center text-[10px]" style="width: 30px;">ลำดับ</th>`;
+    tableHTML += `<th class="py-2 px-2 border border-slate-200 text-center text-[10px]" style="width: 70px;">วันที่</th>`;
+    tableHTML += `<th class="py-2 px-2 border border-slate-200 text-center " style="min-width: 90px;">ไซต์งาน / โครงการ</th>`;
+    tableHTML += `<th class="py-2 px-2 border border-slate-200 text-center min-w-[250px]">รายละเอียดงาน</th>`;
     sortedWorkers.forEach(worker => {
       tableHTML += `<th class="py-2 px-2 border border-slate-200 text-center text-[10px]" style="width: 40px;">${worker.name}<br><span class="font-normal text-slate-500">(${worker.rate})</span></th>`;
     });
@@ -811,7 +969,7 @@ function initPivotReportPage(runSetup) {
       tableHTML += `<tr class="hover:bg-slate-50">`;
       tableHTML += `<td class="py-2 px-2 border border-slate-200 text-center text-[10px]">${index + 1}</td>`;
       tableHTML += `<td class="py-2 px-2 border border-slate-200 text-[10px]">${new Date(log.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'numeric', year: '2-digit' })}</td>`;
-      tableHTML += `<td class="py-2 px-2 border border-slate-200 truncate" title="${log.site}"><div class="truncate">${log.site}</div></td>`;
+      tableHTML += `<td class="py-2 px-2 border border-slate-200">${log.site}</td>`;
       tableHTML += `<td class="py-2 px-2 border border-slate-200">${log.detail}</td>`;
 
       sortedWorkers.forEach(worker => {
@@ -857,6 +1015,7 @@ function initPivotReportPage(runSetup) {
     document.getElementById('pivot-start-date').value = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
     document.getElementById('pivot-end-date').value = today.toISOString().split('T')[0];
   }
+  renderPivotReport();
 }
 
 // --- Business Logic Helpers ---
