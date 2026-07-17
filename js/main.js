@@ -1,31 +1,49 @@
 // Global State
 let workers = [];
 let logs = [];
+let isOnline = false;
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', async () => {
-  showLoadingOverlay('กำลังโหลดข้อมูล...');
+  showLoadingOverlay('กำลังเชื่อมต่อกับ Cloud...');
+  updateSyncStatus('syncing');
 
   // Fetch fresh data from the cloud on every page load
   const cloudData = await pullAllData();
+
   if (cloudData) {
     workers = cloudData.workers;
     logs = cloudData.logs;
-  } else {
-    // Handle case where data cannot be fetched
-    workers = [];
-    logs = [];
-  }
-
-  // Initialize page events and render data AFTER data is fetched
-  // ใช้ try/finally เพื่อให้ overlay ปิดเสมอ แม้ routePage จะเกิด error ระหว่างประมวลผล
-  // (ป้องกันปัญหาหน้าเว็บค้างที่ "กำลังโหลดข้อมูล..." ไม่หยุด หากมีบั๊กเกิดขึ้นระหว่างการ init หน้าใดหน้าหนึ่ง)
-  try {
-    routePage(true);
-  } catch (err) {
-    console.error('เกิดข้อผิดพลาดระหว่างโหลดหน้า:', err);
-  } finally {
+    isOnline = true;
+    updateSyncStatus('online');
     hideLoadingOverlay();
+
+    // Initialize page events and render data AFTER data is fetched
+    // ใช้ try/finally เพื่อให้ overlay ปิดเสมอ แม้ routePage จะเกิด error ระหว่างประมวลผล
+    // (ป้องกันปัญหาหน้าเว็บค้างที่ "กำลังโหลดข้อมูล..." ไม่หยุด หากมีบั๊กเกิดขึ้นระหว่างการ init หน้าใดหน้าหนึ่ง)
+    try {
+      routePage(true);
+    } catch (err) {
+      console.error('เกิดข้อผิดพลาดระหว่างโหลดหน้า:', err);
+      Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถแสดงผลหน้านี้ได้ โปรดลองรีเฟรช', 'error');
+    }
+  } else {
+    // Handle case where data cannot be fetched. Stop execution.
+    isOnline = false;
+    updateSyncStatus('offline');
+    // The error message is already shown by pullAllData(),
+    // we can show a more specific one here with a retry button.
+    Swal.fire({
+      title: 'การเชื่อมต่อล้มเหลว',
+      text: 'ไม่สามารถดึงข้อมูลจาก Google Sheet ได้ โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ตและลองอีกครั้ง',
+      icon: 'error',
+      confirmButtonText: '<i class="fa-solid fa-rotate"></i> ลองอีกครั้ง',
+      allowOutsideClick: false,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.reload();
+      }
+    });
   }
 });
 
@@ -55,6 +73,31 @@ function showLoadingOverlay(message) {
 
 function hideLoadingOverlay() {
   Swal.close();
+}
+
+function updateSyncStatus(status) {
+  const statusEl = document.getElementById('sync-status');
+  if (!statusEl) return;
+
+  const iconEl = statusEl.querySelector('i');
+  const textEl = statusEl.querySelector('span');
+
+  statusEl.classList.remove('bg-blue-700', 'bg-emerald-500', 'bg-rose-500');
+  iconEl.classList.remove('fa-spin', 'fa-cloud', 'fa-cloud-arrow-up', 'fa-cloud-slash');
+
+  if (status === 'syncing') {
+    statusEl.classList.add('bg-blue-700');
+    iconEl.classList.add('fa-cloud', 'fa-spin');
+    textEl.textContent = 'กำลังซิงค์...';
+  } else if (status === 'online') {
+    statusEl.classList.add('bg-emerald-500');
+    iconEl.classList.add('fa-cloud-arrow-up');
+    textEl.textContent = 'ออนไลน์';
+  } else if (status === 'offline') {
+    statusEl.classList.add('bg-rose-500');
+    iconEl.classList.add('fa-cloud-slash');
+    textEl.textContent = 'เชื่อมต่อล้มเหลว';
+  }
 }
 
 // --- PAGE INITIALIZERS ---
