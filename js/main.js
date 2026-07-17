@@ -59,6 +59,8 @@ function routePage(runSetup) {
     initDailyLogPage(runSetup); // Pass the parameter down
   } else if (page === 'report.html') {
     initReportPage(runSetup); // Pass the parameter down
+  } else if (page === 'pivot-report.html') {
+    initPivotReportPage(runSetup);
   }
 }
 
@@ -121,7 +123,7 @@ function initIndexPage(runSetup) {
     mobileList.innerHTML = '';
 
     if (logsToRender.length === 0) {
-      const emptyHtml = `<td colspan="6" class="text-center py-8 text-slate-400">ไม่พบรายการบันทึก</td>`;
+      const emptyHtml = `<td colspan="7" class="text-center py-8 text-slate-400">ไม่พบรายการบันทึก</td>`;
       tableBody.innerHTML = `<tr>${emptyHtml}</tr>`;
       mobileList.innerHTML = `<div class="text-center py-8 text-slate-400">ไม่พบรายการบันทึก</div>`;
       return;
@@ -141,6 +143,7 @@ function initIndexPage(runSetup) {
         <td class="py-3 px-4 text-slate-500">${log.detail || '-'}</td>
         <td class="py-3 px-4 text-center">${workerCount} คน</td>
         <td class="py-3 px-4 text-right font-semibold text-emerald-600">฿${totalWage.toFixed(2)}</td>
+        <td class="py-3 px-4 text-slate-500">${log.notes || '-'}</td>
         <td class="py-3 px-4 text-center">
           <div class="flex justify-center gap-2">
             <button onclick="editLog('${log.id}')" class="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg transition-colors"><i class="fa-solid fa-pen-to-square"></i></button>
@@ -162,7 +165,10 @@ function initIndexPage(runSetup) {
           <span class="text-sm font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-lg">฿${totalWage.toFixed(2)}</span>
         </div>
         <div class="flex justify-between items-center pt-2 border-t border-slate-100">
-          <span class="text-xs text-slate-400">${workerCount} คนทำงาน</span>
+          <div>
+            <span class="text-xs text-slate-400">${workerCount} คนทำงาน</span>
+            ${log.notes ? `<p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-user-tie text-[10px]"></i> ผู้สั่งงาน: ${log.notes}</p>` : ''}
+          </div>
           <div class="flex gap-2">
             <button onclick="editLog('${log.id}')" class="text-xs bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg font-medium"><i class="fa-solid fa-pen-to-square"></i> แก้ไข</button>
             <button onclick="deleteLog('${log.id}')" class="text-xs bg-rose-50 text-rose-600 px-3 py-1.5 rounded-lg font-medium"><i class="fa-solid fa-trash-can"></i> ลบ</button>
@@ -371,14 +377,14 @@ function initDailyLogPage(runSetup) {
       row.className = "p-4 rounded-xl border border-slate-200 bg-slate-50 hover:bg-white hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4";
       row.innerHTML = `
         <div class="flex items-center gap-3">
-          <input type="checkbox" id="check-${worker.id}" class="worker-checkbox w-5 h-5 text-blue-600 rounded-lg focus:ring-blue-500 border-slate-300" onchange="calculateDailyTotal()">
+          <input type="checkbox" id="check-${worker.id}" class="worker-checkbox w-5 h-5 text-blue-600 rounded-lg focus:ring-blue-500 border-slate-300" onchange="toggleWorkerInputs('${worker.id}')">
           <div>
             <label for="check-${worker.id}" class="font-bold text-slate-800 text-sm cursor-pointer">${worker.name}</label>
             <p class="text-xs text-slate-500">ค่าแรงเริ่มต้น: ฿${parseFloat(worker.rate || 0).toFixed(2)}/วัน</p>
           </div>
         </div>
         
-        <div class="grid grid-cols-3 gap-2 w-full md:w-auto">
+        <div id="input-wrapper-${worker.id}" class="grid grid-cols-3 gap-2 w-full md:w-auto hidden">
           <div>
             <label class="block text-[10px] font-semibold text-slate-500 mb-0.5">ประเภทงาน</label>
             <select id="type-${worker.id}" class="w-full text-xs px-2 py-1.5 rounded-lg border border-slate-300 bg-white" onchange="toggleWorkTypeFields('${worker.id}')">
@@ -388,11 +394,11 @@ function initDailyLogPage(runSetup) {
           </div>
           <div id="div-normal-${worker.id}">
             <label class="block text-[10px] font-semibold text-slate-500 mb-0.5">ชม.ปกติ (สูงสุด 8)</label>
-            <input type="number" id="normal-${worker.id}" value="8" min="0" max="8" step="0.5" class="w-full text-xs px-2 py-1.5 rounded-lg border border-slate-300" oninput="calculateDailyTotal()">
+            <input type="number" id="normal-${worker.id}" value="8" min="0" max="8" step="1" class="w-full text-xs px-2 py-1.5 rounded-lg border border-slate-300" oninput="calculateDailyTotal()">
           </div>
           <div id="div-ot-${worker.id}">
             <label class="block text-[10px] font-semibold text-slate-500 mb-0.5">ชม. OT (คูณ 2)</label>
-            <input type="number" id="ot-${worker.id}" value="0" min="0" step="0.5" class="w-full text-xs px-2 py-1.5 rounded-lg border border-slate-300" oninput="calculateDailyTotal()">
+            <input type="number" id="ot-${worker.id}" value="0" min="0" max="4" step="1" class="w-full text-xs px-2 py-1.5 rounded-lg border border-slate-300" oninput="calculateDailyTotal()">
           </div>
           <div id="div-flat-${worker.id}" class="hidden col-span-2">
             <label class="block text-[10px] font-semibold text-slate-500 mb-0.5">เงินเหมาสุทธิ (บาท)</label>
@@ -428,6 +434,7 @@ function initDailyLogPage(runSetup) {
     // ติ๊กเลือกคนงานและเติมข้อมูลของแต่ละคน
     log.details.forEach(det => {
       const workerCheckbox = document.getElementById(`check-${det.workerId}`);
+      toggleWorkerInputs(det.workerId); // แสดงช่องกรอกข้อมูล
       if (workerCheckbox) {
         workerCheckbox.checked = true;
         document.getElementById(`type-${det.workerId}`).value = det.workType;
@@ -692,6 +699,166 @@ function initReportPage(runSetup) {
   processReportData(); // เรียกใช้ฟังก์ชันเพื่อแสดงข้อมูลทั้งหมดในครั้งแรกที่โหลดหน้า
 }
 
+function initPivotReportPage(runSetup) {
+  console.log("Initializing Pivot Report Page");
+  const btnApply = document.getElementById('btn-pivot-apply');
+  const btnPrint = document.getElementById('btn-pivot-print');
+  const contentDiv = document.getElementById('pivot-table-content');
+  const titleEl = document.getElementById('pivot-table-title');
+  const summaryContainer = document.getElementById('pivot-summary-container');
+  const transportInput = document.getElementById('fixed-transport-cost');
+
+  /**
+   * จัดรูปแบบตัวเลข:
+   * - ถ้ามีทศนิยม, แสดง 2 ตำแหน่ง (1,234.50)
+   * - ถ้าเป็นเลขจำนวนเต็ม, ไม่แสดงทศนิยม (500)
+   */
+  function formatNumber(num) {
+    if (num % 1 !== 0) {
+      return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    return num.toLocaleString('en-US');
+  }
+
+  if (!btnApply) return;
+
+  let grandTotalDaily = 0;
+  let grandTotalBonus = 0;
+  let grandTotalFlat = 0;
+
+  function updateGrandTotal() {
+    const transportCost = parseFloat(transportInput.value) || 0;
+    const subTotalDailyAndBonus = grandTotalDaily + grandTotalBonus;
+    document.getElementById('summary-subtotal-daily-bonus').textContent = `${subTotalDailyAndBonus.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`;
+    const grandTotal = transportCost + grandTotalFlat + subTotalDailyAndBonus;
+    document.getElementById('summary-grand-total').textContent = `${grandTotal.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`;
+  }
+
+  function renderPivotReport() {
+    showLoadingOverlay('กำลังสร้างรายงาน...');
+
+    // Reset grand totals
+    grandTotalDaily = grandTotalBonus = grandTotalFlat = 0;
+
+    const startFilter = document.getElementById('pivot-start-date').value;
+    const endFilter = document.getElementById('pivot-end-date').value;
+
+    if (!startFilter || !endFilter) {
+      contentDiv.innerHTML = `<p class="text-center text-amber-600 py-12">กรุณาเลือกทั้ง "วันที่เริ่มต้น" และ "วันที่สิ้นสุด"</p>`;
+      hideLoadingOverlay();
+      return;
+    } else {
+      titleEl.textContent = `ค่าแรงรายวัน ประจำวันที่ ${new Date(startFilter).toLocaleDateString('th-TH')} ถึงวันที่ ${new Date(endFilter).toLocaleDateString('th-TH')}`;
+    }
+
+    const filteredLogs = logs.filter(log => {
+      const date = log.date.split('T')[0];
+      return date >= startFilter && date <= endFilter;
+    }).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    if (filteredLogs.length === 0) {
+      contentDiv.innerHTML = `<p class="text-center text-slate-400 py-12">ไม่พบข้อมูลใบงานในช่วงวันที่ที่เลือก</p>`;
+      summaryContainer.classList.add('hidden');
+      hideLoadingOverlay();
+      return;
+    }
+
+    const sortedWorkers = [...workers].sort((a, b) => a.name.localeCompare(b.name, 'th'));
+
+    let tableHTML = `<table class="w-full text-left border-collapse text-xs">`;
+
+    // --- Table Header ---
+    tableHTML += `<thead><tr class="bg-slate-100">`;
+    tableHTML += `<th class="py-2 px-2 border border-slate-200 text-center text-[10px]" style="width: 50px;">ลำดับ</th>`;
+    tableHTML += `<th class="py-2 px-2 border border-slate-200 text-[10px]" style="width: 90px;">วันที่</th>`;
+    tableHTML += `<th class="py-2 px-2 border border-slate-200" style="min-width: 130px;">ไซต์งาน / โครงการ</th>`;
+    tableHTML += `<th class="py-2 px-2 border border-slate-200 min-w-[250px]">รายละเอียดงาน</th>`;
+    sortedWorkers.forEach(worker => {
+      tableHTML += `<th class="py-2 px-2 border border-slate-200 text-center text-[10px]" style="width: 40px;">${worker.name}<br><span class="font-normal text-slate-500">(${worker.rate})</span></th>`;
+    });
+    tableHTML += `<th class="py-2 px-2 border border-slate-200 text-right">ยอดรวม (รายวัน)</th>`;
+    tableHTML += `<th class="py-2 px-2 border border-slate-200 text-right">ยอด +20% (รายวัน)</th>`;
+    tableHTML += `<th class="py-2 px-2 border border-slate-200 text-right">ยอดรวม (เหมา)</th>`;
+    tableHTML += `<th class="py-2 px-2 border border-slate-200 text-right">ยอดรวมสุทธิ</th>`;
+    tableHTML += `<th class="py-2 px-2 border border-slate-200">ผู้สั่งงาน</th>`;
+    tableHTML += `</tr></thead>`;
+
+    // --- Table Body ---
+    tableHTML += `<tbody>`;
+    filteredLogs.forEach((log, index) => {
+      const logDetailsMap = new Map(log.details.map(d => [d.workerId, d]));
+
+      let dailyTotal = 0;
+      let bonusTotal = 0;
+      let flatTotal = 0;
+      let netTotal = 0;
+
+      log.details.forEach(det => {
+        if (det.workType === 'daily') {
+          dailyTotal += det.originalWage;
+          bonusTotal += det.deduction;
+        } else {
+          flatTotal += det.originalWage;
+        }
+        netTotal += det.netWage;
+      });
+
+      // Add to grand totals
+      grandTotalDaily += dailyTotal;
+      grandTotalBonus += bonusTotal;
+      grandTotalFlat += flatTotal;
+
+      tableHTML += `<tr class="hover:bg-slate-50">`;
+      tableHTML += `<td class="py-2 px-2 border border-slate-200 text-center text-[10px]">${index + 1}</td>`;
+      tableHTML += `<td class="py-2 px-2 border border-slate-200 text-[10px]">${new Date(log.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'numeric', year: '2-digit' })}</td>`;
+      tableHTML += `<td class="py-2 px-2 border border-slate-200 truncate" title="${log.site}"><div class="truncate">${log.site}</div></td>`;
+      tableHTML += `<td class="py-2 px-2 border border-slate-200">${log.detail}</td>`;
+
+      sortedWorkers.forEach(worker => {
+        const detail = logDetailsMap.get(worker.id);
+        let cellContent = '-';
+        if (detail) {
+          cellContent = detail.workType === 'flat' 
+            ? `${formatNumber(detail.originalWage)} (เหมา)` 
+            : formatNumber(detail.netWage);
+        }
+        tableHTML += `<td class="py-2 px-2 border border-slate-200 text-right text-[10px]">${cellContent}</td>`;
+      });
+
+      tableHTML += `<td class="py-2 px-2 border border-slate-200 text-right font-medium">${formatNumber(dailyTotal)}</td>`;
+      tableHTML += `<td class="py-2 px-2 border border-slate-200 text-right font-medium text-sky-600">+${formatNumber(bonusTotal)}</td>`;
+      tableHTML += `<td class="py-2 px-2 border border-slate-200 text-right font-medium">${formatNumber(flatTotal)}</td>`;
+      tableHTML += `<td class="py-2 px-2 border border-slate-200 text-right font-bold text-emerald-600">${formatNumber(netTotal)}</td>`;
+      tableHTML += `<td class="py-2 px-2 border border-slate-200">${log.notes || '-'}</td>`;
+      tableHTML += `</tr>`;
+    });
+    tableHTML += `</tbody></table>`;
+
+    contentDiv.innerHTML = tableHTML;
+
+    // --- Update Summary Section ---
+    summaryContainer.classList.remove('hidden');
+    document.getElementById('summary-total-flat').textContent = `${grandTotalFlat.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`;
+    document.getElementById('summary-total-daily').textContent = `${grandTotalDaily.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`;
+    document.getElementById('summary-total-bonus').textContent = `${grandTotalBonus.toLocaleString('th-TH', { style: 'currency', currency: 'THB' })}`;
+    
+    // Update final grand total
+    updateGrandTotal();
+
+    hideLoadingOverlay();
+  }
+
+  if (runSetup) {
+    btnApply.addEventListener('click', renderPivotReport);
+    btnPrint.addEventListener('click', () => window.print());
+    transportInput.addEventListener('input', updateGrandTotal);
+    // Set default dates to the current month
+    const today = new Date();
+    document.getElementById('pivot-start-date').value = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+    document.getElementById('pivot-end-date').value = today.toISOString().split('T')[0];
+  }
+}
+
 // --- Business Logic Helpers ---
 function calculateNetWage(rawWage, type, workerName) {
   // ยอดสุทธิ = ค่าแรงดิบ + โบนัส
@@ -764,6 +931,16 @@ window.deleteLog = function(id) {
 window.editLog = function(id) {
   window.location.href = `daily-log.html?id=${id}`;
 };
+
+window.toggleWorkerInputs = function(workerId) {
+  const isChecked = document.getElementById(`check-${workerId}`).checked;
+  const wrapper = document.getElementById(`input-wrapper-${workerId}`);
+  if (wrapper) {
+    wrapper.classList.toggle('hidden', !isChecked);
+  }
+  // คำนวณยอดรวมใหม่ทุกครั้งที่มีการเปลี่ยนแปลง
+  calculateDailyTotal();
+}
 
 window.toggleWorkTypeFields = function(workerId, shouldCalculate = true) {
   const type = document.getElementById(`type-${workerId}`).value;

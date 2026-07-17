@@ -11,7 +11,7 @@
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <!-- Custom Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=2.1">
+  <link rel="stylesheet" href="css/style.css?v=2.2">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
     body {
@@ -47,27 +47,27 @@
           <span>รายละเอียดโครงการ & ไซต์งาน</span>
         </h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div class="md:col-span-1">
             <label class="block text-sm font-medium text-slate-600 mb-1">วันที่ทำงาน <span class="text-red-500">*</span></label>
             <input type="date" id="log-date" required 
                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
           </div>
-          <div>
+          <div class="md:col-span-2">
             <label class="block text-sm font-medium text-slate-600 mb-1">ชื่อโครงการ / ไซต์งาน <span class="text-red-500">*</span></label>
-            <input type="text" id="project-name" placeholder="ตัวอย่าง: บ้านลูกค้าตลิ่งชัน" required 
+            <input type="text" id="project-name" placeholder="ตัวอย่าง: หมู่บ้านริเวอร์ไซด์-บ้านB17" required 
                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
           </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-600 mb-1">รายละเอียดหน้างาน</label>
-            <input type="text" id="work-detail" placeholder="ตัวอย่าง: เทพื้นปูน / ก่อผนัง" 
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-slate-600 mb-1">ผู้สั่งงาน <span class="text-red-500">*</span></label>
+            <input type="text" id="log-notes" placeholder="ใส่ชื่อผู้สั่งงาน" required
                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
           </div>
         </div>
         
         <div class="mt-4">
-          <label class="block text-sm font-medium text-slate-600 mb-1">หมายเหตุเพิ่มเติม</label>
-          <textarea id="log-notes" rows="2" placeholder="ระบุข้อมูลเพิ่มเติม (ถ้ามี)" 
+          <label class="block text-sm font-medium text-slate-600 mb-1">รายละเอียดหน้างาน <span class="text-red-500">*</span></label>
+          <textarea id="work-detail" rows="2" placeholder="ระบุรายละเอียดงานที่ทำในวันนี้ เช่น เทพื้นปูน, ก่อผนัง, ตัดแต่งงานกิ่งไม้ ต้นไม้" required
                     class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"></textarea>
         </div>
       </div>
@@ -146,7 +146,7 @@
 
   <!-- เชื่อมโยงสคริปต์หลัก -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="js/api.js?v=2.1"></script>
-  <script src="js/main.js?v=2.1"></script>
+  <script src="js/api.js?v=2.2"></script>
+  <script src="js/main.js?v=2.2"></script>
 </body>
 </html>

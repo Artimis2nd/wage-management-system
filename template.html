@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{PAGE_TITLE}}</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/style.css?v=2.2">
+  <!-- SheetJS CDN (for Excel export) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Sarabun', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col pb-20 md:pb-5">
+
+  {{PAGE_CONTENT}}
+
+  <!-- Mobile Bottom Tab Bar (เมนูด้านล่างสุด) -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-lg px-4 py-2 flex justify-around md:hidden z-50">
+    <a href="index.html" class="flex flex-col items-center text-slate-400 hover:text-blue-500" data-nav="index.html"><i class="fa-solid fa-house text-lg"></i><span class="text-[10px] mt-1 font-medium">หน้าแรก</span></a>
+    <a href="daily-log.html" class="flex flex-col items-center text-slate-400 hover:text-blue-500" data-nav="daily-log.html"><i class="fa-solid fa-calendar-day text-lg"></i><span class="text-[10px] mt-1 font-medium">รายวัน</span></a>
+    <a href="report.html" class="flex flex-col items-center text-slate-400 hover:text-blue-500" data-nav="report.html"><i class="fa-solid fa-file-invoice-dollar text-lg"></i><span class="text-[10px] mt-1 font-medium">รายงาน</span></a>
+  </nav>
+
+  <!-- App Scripts -->
+  <script src="js/api.js?v=2.2"></script>
+  <script src="js/main.js?v=2.2"></script>
+
+</body>
+</html>

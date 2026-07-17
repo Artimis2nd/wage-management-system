@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบบันทึกค่าแรงคนงาน - รายงานสรุปค่าแรงรายวัน</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/style.css?v=2.2">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Sarabun', sans-serif;
+    }
+    /* Styles for printing */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #pivot-table-container, #pivot-table-container * {
+        visibility: visible;
+      }
+      #pivot-table-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+      .no-print {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col pb-20 md:pb-5">
+
+  <!-- Header / Navigation -->
+  <header class="bg-blue-600 text-white shadow-md sticky top-0 z-50 no-print">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="index.html" class="text-xl font-bold flex items-center gap-2 hover:text-blue-100 transition-all">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>รายงานสรุปค่าแรงรายวัน</span>
+      </a>
+      <span id="sync-status" class="text-xs px-3 py-1.5 rounded-full flex items-center gap-2 font-medium">
+        <i class="fa-solid fa-cloud"></i>
+        <span>...</span>
+      </span>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
+    
+    <!-- ส่วนตัวกรอง (Filter) -->
+    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6 no-print">
+      <h2 class="text-lg font-bold mb-4 flex items-center gap-2 text-blue-600">
+        <i class="fa-solid fa-filter"></i>
+        <span>ตัวกรองข้อมูล</span>
+      </h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1">ตั้งแต่วันที่</label>
+          <input type="date" id="pivot-start-date" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1">ถึงวันที่</label>
+          <input type="date" id="pivot-end-date" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+        </div>
+      </div>
+      
+      <div class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-100">
+        <button id="btn-pivot-apply" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-xl text-sm transition-all flex items-center gap-2">
+          <i class="fa-solid fa-cogs"></i> สร้างรายงาน
+        </button>
+        <button id="btn-pivot-print" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2.5 px-6 rounded-xl text-sm transition-all ml-auto flex items-center gap-2">
+          <i class="fa-solid fa-print"></i> พิมพ์รายงาน
+        </button>
+      </div>
+    </div>
+
+    <!-- ส่วนสรุปค่าแรงรายวัน (Pivot Table) -->
+    <div id="pivot-table-container" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+      <h3 id="pivot-table-title" class="text-center font-bold text-lg text-slate-700 mb-4"></h3>
+      <div id="pivot-table-content" class="overflow-x-auto">
+        <p class="text-center text-slate-400 py-12">กรุณาเลือกช่วงวันที่และกด "สร้างรายงาน"</p>
+      </div>
+    </div>
+
+    <!-- ส่วนสรุปรายการตรวจทานยอดเงิน -->
+    <div id="pivot-summary-container" class="hidden bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mt-6 no-print inline-block min-w-[448px]">
+      <h2 class="text-sm font-bold mb-4 flex items-center gap-2 text-blue-600">
+        <i class="fa-solid fa-file-invoice-dollar"></i>
+        <span>รายการตรวจทานยอดเงินสุทธิ</span>
+      </h2>
+      <div class="space-y-2 text-xs">
+        <div class="flex justify-between items-center">
+          <label for="fixed-transport-cost" class="text-slate-600">ค่าขนส่งชิ้นส่วนคงที่:</label>
+          <input type="number" id="fixed-transport-cost" value="0" class="w-32 text-right font-semibold text-slate-700 border-b-2 border-slate-200 focus:border-blue-500 focus:outline-none px-2 py-1">
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-slate-600">ยอดรวมค่าแรงเหมาทั้งหมด:</span>
+          <span id="summary-total-flat" class="font-semibold text-slate-700">0.00 บาท</span>
+        </div>
+        <hr class="my-2 border-dashed">
+        <div class="flex justify-between items-center">
+          <span class="text-slate-600">ยอดรวมค่าแรง(รายวัน)ทั้งหมด:</span>
+          <span id="summary-total-daily" class="font-semibold text-slate-700">0.00 บาท</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-slate-600">ยอดรวมค่าดำเนินการทั้งหมด (+20%):</span>
+          <span id="summary-total-bonus" class="font-semibold text-sky-600">0.00 บาท</span>
+        </div>
+        <div class="flex justify-between items-center font-medium">
+          <span class="text-slate-600">ยอดรวมเงินค่าแรงและค่าดำเนินการทั้งหมด:</span>
+          <span id="summary-subtotal-daily-bonus" class="text-slate-700">0.00 บาท</span>
+        </div>
+        <hr class="my-2 border-dashed">
+        <div class="flex justify-between items-center pt-1 border-t border-slate-200">
+          <span class="font-bold text-lg text-emerald-700">💵 รวมเงินทั้งหมดที่ต้องจ่ายสุทธิ:</span>
+          <span id="summary-grand-total" class="font-bold text-lg text-emerald-700">0.00 บาท</span>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- เชื่อมโยงสคริปต์หลัก -->
+  <script src="js/api.js?v=2.2"></script>
+  <script src="js/main.js?v=2.2"></script>
+</body>
+</html>

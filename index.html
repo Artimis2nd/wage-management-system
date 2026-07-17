@@ -11,7 +11,7 @@
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <!-- Custom Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=2.1">
+  <link rel="stylesheet" href="css/style.css?v=2.2">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
     body {
@@ -26,7 +26,7 @@
     <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
       <h1 class="text-xl font-bold flex items-center gap-2">
         <i class="fa-solid fa-calculator text-yellow-300"></i>
-        <span>หน้าแรก ระบบคิดค่าแรงคนงาน(ยอดในรายการยังไม่รวม+20%)</span>
+        <span>หน้าแรก ระบบคิดค่าแรงคนงาน</span>
       </h1>
       <span id="sync-status" class="text-xs px-3 py-1.5 rounded-full flex items-center gap-2 font-medium">
         <i class="fa-solid fa-cloud"></i>
@@ -39,14 +39,18 @@
   <main class="max-w-6xl mx-auto px-4 py-6 flex-grow w-full">
     
     <!-- Quick Navigation (ปุ่มลัดนำทางสำหรับทุกหน้าจอ) -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
       <a href="daily-log.html" class="flex flex-col items-center justify-center p-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl shadow transition-all duration-200">
         <i class="fa-solid fa-calendar-day text-2xl mb-2"></i>
         <span class="font-medium text-sm">บันทึกงานประจำวัน</span>
       </a>
-      <a href="report.html" class="flex flex-col items-center justify-center p-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl shadow transition-all duration-200 sm:col-start-2">
+      <a href="report.html" class="flex flex-col items-center justify-center p-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl shadow transition-all duration-200">
         <i class="fa-solid fa-file-invoice-dollar text-2xl mb-2"></i>
-        <span class="font-medium text-sm">รายงาน & สรุปงวด</span>
+        <span class="font-medium text-sm">สรุปยอดค่าแรงรายบุคคล</span>
+      </a>
+      <a href="pivot-report.html" class="flex flex-col items-center justify-center p-4 bg-sky-500 hover:bg-sky-600 text-white rounded-2xl shadow transition-all duration-200">
+        <i class="fa-solid fa-table-columns text-2xl mb-2"></i>
+        <span class="font-medium text-sm">รายงานสรุปค่าแรงรายวัน</span>
       </a>
       <a href="workers.html" class="flex flex-col items-center justify-center p-4 bg-purple-500 hover:bg-purple-600 text-white rounded-2xl shadow transition-all duration-200">
         <i class="fa-solid fa-users text-2xl mb-2"></i>
@@ -125,6 +129,7 @@
               <th class="py-3 px-4">รายละเอียดงาน</th>
               <th class="py-3 px-4 text-center">จำนวนคนงาน</th>
               <th class="py-3 px-4 text-right">ยอดเงินรวม</th>
+              <th class="py-3 px-4">ผู้สั่งงาน</th>
               <th class="py-3 px-4 text-center">การจัดการ</th>
             </tr>
           </thead>
@@ -164,7 +169,7 @@
 
   <!-- เชื่อมโยงสคริปต์หลักของแอป -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="js/api.js?v=2.1"></script>
-  <script src="js/main.js?v=2.1"></script>
+  <script src="js/api.js?v=2.2"></script>
+  <script src="js/main.js?v=2.2"></script>
 </body>
 </html>
