@@ -89,40 +89,40 @@
         <div id="pivot-table-content" class="overflow-x-auto">
           <p class="text-center text-slate-400 py-12">กรุณาเลือกช่วงวันที่และกด "สร้างรายงาน"</p>
         </div>
-      </div>
 
-      <!-- ส่วนสรุปรายการตรวจทานยอดเงิน -->
-      <div id="pivot-summary-container" class="hidden bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mt-6 inline-block min-w-[448px]">
-        <h2 class="text-sm font-bold mb-4 flex items-center gap-2 text-blue-600">
-          <i class="fa-solid fa-file-invoice-dollar"></i>
-          <span>รายการตรวจทานยอดเงินสุทธิ</span>
-        </h2>
-        <div class="space-y-2 text-xs">
-          <div class="flex justify-between items-center">
-            <label for="fixed-transport-cost" class="text-slate-600">ค่าขนส่งชิ้นส่วนคงที่:</label>
-            <input type="number" id="fixed-transport-cost" value="0" class="w-32 text-right font-semibold text-slate-700 border-b-2 border-slate-200 focus:border-blue-500 focus:outline-none px-2 py-1 no-print">
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-slate-600">ยอดรวมค่าแรงเหมาทั้งหมด:</span>
-            <span id="summary-total-flat" class="font-semibold text-slate-700">0.00 บาท</span>
-          </div>
-          <hr class="my-2 border-dashed">
-          <div class="flex justify-between items-center">
-            <span class="text-slate-600">ยอดรวมค่าแรง(รายวัน)ทั้งหมด:</span>
-            <span id="summary-total-daily" class="font-semibold text-slate-700">0.00 บาท</span>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-slate-600">ยอดรวมค่าดำเนินการทั้งหมด (+20%):</span>
-            <span id="summary-total-bonus" class="font-semibold text-sky-600">0.00 บาท</span>
-          </div>
-          <div class="flex justify-between items-center font-medium">
-            <span class="text-slate-600">ยอดรวมเงินค่าแรงและค่าดำเนินการทั้งหมด:</span>
-            <span id="summary-subtotal-daily-bonus" class="text-slate-700">0.00 บาท</span>
-          </div>
-          <hr class="my-2 border-dashed">
-          <div class="flex justify-between items-center pt-1 border-t border-slate-200">
-            <span class="font-bold text-lg text-emerald-700">💵 รวมเงินทั้งหมดที่ต้องจ่ายสุทธิ:</span>
-            <span id="summary-grand-total" class="font-bold text-lg text-emerald-700">0.00 บาท</span>
+        <!-- ส่วนสรุปรายการตรวจทานยอดเงิน -->
+        <div id="pivot-summary-container" class="hidden bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mt-6 inline-block min-w-[448px]">
+          <h2 class="text-sm font-bold mb-4 flex items-center gap-2 text-blue-600">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+            <span>รายการตรวจทานยอดเงินสุทธิ</span>
+          </h2>
+          <div class="space-y-2 text-xs">
+            <div class="flex justify-between items-center">
+              <label for="fixed-transport-cost" class="text-slate-600">ค่าขนส่งชิ้นส่วนคงที่:</label>
+              <input type="number" id="fixed-transport-cost" value="0" class="w-32 text-right font-semibold text-slate-700 border-b-2 border-slate-200 focus:border-blue-500 focus:outline-none px-2 py-1 no-print">
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-slate-600">ยอดรวมค่าแรงเหมาทั้งหมด:</span>
+              <span id="summary-total-flat" class="font-semibold text-slate-700">0.00 บาท</span>
+            </div>
+            <hr class="my-2 border-dashed">
+            <div class="flex justify-between items-center">
+              <span class="text-slate-600">ยอดรวมค่าแรง(รายวัน)ทั้งหมด:</span>
+              <span id="summary-total-daily" class="font-semibold text-slate-700">0.00 บาท</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-slate-600">ยอดรวมค่าดำเนินการทั้งหมด (+20%):</span>
+              <span id="summary-total-bonus" class="font-semibold text-sky-600">0.00 บาท</span>
+            </div>
+            <div class="flex justify-between items-center font-medium">
+              <span class="text-slate-600">ยอดรวมเงินค่าแรงและค่าดำเนินการทั้งหมด:</span>
+              <span id="summary-subtotal-daily-bonus" class="text-slate-700">0.00 บาท</span>
+            </div>
+            <hr class="my-2 border-dashed">
+            <div class="flex justify-between items-center pt-1 border-t border-slate-200">
+              <span class="font-bold text-lg text-emerald-700">💵 รวมเงินทั้งหมดที่ต้องจ่ายสุทธิ:</span>
+              <span id="summary-grand-total" class="font-bold text-lg text-emerald-700">0.00 บาท</span>
+            </div>
           </div>
         </div>
       </div>
