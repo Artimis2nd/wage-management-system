@@ -1,12 +1,12 @@
 // Global State
 let workers = [];
 let logs = [];
-let isOnline = false;
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', async () => {
+  const page = window.location.pathname.split("/").pop() || 'index.html';
+  
   showLoadingOverlay('กำลังเชื่อมต่อกับ Cloud...');
-  updateSyncStatus('syncing');
 
   // Fetch fresh data from the cloud on every page load
   const cloudData = await pullAllData();
@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (cloudData) {
     workers = cloudData.workers;
     logs = cloudData.logs;
-    isOnline = true;
     updateSyncStatus('online');
     hideLoadingOverlay();
 
@@ -23,13 +22,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // (ป้องกันปัญหาหน้าเว็บค้างที่ "กำลังโหลดข้อมูล..." ไม่หยุด หากมีบั๊กเกิดขึ้นระหว่างการ init หน้าใดหน้าหนึ่ง)
     try {
       routePage(true);
+      
     } catch (err) {
       console.error('เกิดข้อผิดพลาดระหว่างโหลดหน้า:', err);
       Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถแสดงผลหน้านี้ได้ โปรดลองรีเฟรช', 'error');
     }
   } else {
     // Handle case where data cannot be fetched. Stop execution.
-    isOnline = false;
     updateSyncStatus('offline');
     // The error message is already shown by pullAllData(),
     // we can show a more specific one here with a retry button.
@@ -60,9 +59,9 @@ function routePage(runSetup) {
   } else if (page === 'report.html') {
     initReportPage(runSetup); // Pass the parameter down
   } else if (page === 'pivot-report.html') {
-    initPivotReportPage(runSetup);
-  } else if (page === 'log-print.html') {
-    initLogPrintPage();
+    initPivotReportPage(runSetup); // Pass the parameter down
+  } else if (page === 'view-details.html') {
+    initViewDetailsPage(runSetup); // Pass the parameter down
   }
 }
 
@@ -115,30 +114,33 @@ function initIndexPage(runSetup) {
   const mobileList = document.getElementById('logs-mobile-list');
   const searchInput = document.getElementById('search-logs');
   const refreshBtn = document.getElementById('btn-refresh');
-  const printSelectedBtn = document.getElementById('btn-print-selected');
-  const printSelectedMobileBtn = document.getElementById('btn-print-selected-mobile');
+  const exportSelectedBtn = document.getElementById('btn-export-selected');
+  const viewImagesBtn = document.getElementById('btn-view-images');
+  const exportSelectedMobileBtn = document.getElementById('btn-export-selected-mobile');
+  const viewImagesMobileBtn = document.getElementById('btn-view-images-mobile');
+  const mobileActionButtons = document.getElementById('mobile-action-buttons');
   
   if (!totalWorkersEl) return; // Exit if not on the index page
 
   function renderLogs(logsToRender) {
-    if (!tableBody || !mobileList) return;
+    if (!tableBody || !mobileList || !mobileActionButtons) return;
 
     tableBody.innerHTML = ''; // Clear only table body
-    mobileList.innerHTML = mobileList.querySelector('button') ? mobileList.querySelector('button').outerHTML : ''; // Keep the button
+    mobileList.innerHTML = mobileList.querySelector('#btn-export-selected-mobile') ? mobileList.querySelector('#btn-export-selected-mobile').outerHTML : ''; // Keep the button
 
     if (logsToRender.length === 0) {
       const emptyHtml = `<td colspan="7" class="text-center py-8 text-slate-400">ไม่พบรายการบันทึก</td>`;
       tableBody.innerHTML = `<tr>${emptyHtml}</tr>`;
-      mobileList.innerHTML = `<div class="text-center py-8 text-slate-400">ไม่พบรายการบันทึก</div>`;
+      mobileList.innerHTML = mobileActionButtons.outerHTML + `<div class="text-center py-8 text-slate-400">ไม่พบรายการบันทึก</div>`;
       return;
     }
-
+  
     const sortedLogs = [...logsToRender].sort((a, b) => new Date(b.date) - new Date(a.date));
-
+  
     sortedLogs.forEach(log => {
       const totalWage = log.details.reduce((sum, det) => sum + (det.originalWage || 0), 0);
       const workerCount = log.details.length;
-
+  
       const tr = document.createElement('tr');
       tr.className = "hover:bg-slate-50 transition-colors";
       tr.innerHTML = `
@@ -157,7 +159,7 @@ function initIndexPage(runSetup) {
         </td>
       `;
       tableBody.appendChild(tr);
-
+  
       const card = document.createElement('div');
       card.className = "bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2";
       card.innerHTML = `
@@ -177,7 +179,7 @@ function initIndexPage(runSetup) {
             <span class="text-xs text-slate-400">${workerCount} คนทำงาน</span>
             ${log.notes ? `<p class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-user-tie text-[10px]"></i> ผู้สั่งงาน: ${log.notes}</p>` : ''}
           </div>
-          <div class="flex gap-2">
+           <div class="flex gap-2 items-center">
             <button onclick="editLog('${log.id}')" class="text-xs bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg font-medium"><i class="fa-solid fa-pen-to-square"></i> แก้ไข</button>
             <button onclick="deleteLog('${log.id}')" class="text-xs bg-rose-50 text-rose-600 px-3 py-1.5 rounded-lg font-medium"><i class="fa-solid fa-trash-can"></i> ลบ</button>
           </div>
@@ -185,6 +187,22 @@ function initIndexPage(runSetup) {
       `;
       mobileList.appendChild(card);
     });
+  }
+
+  function updateActionButtonsVisibility() {
+    const selectedCount = document.querySelectorAll('.log-checkbox:checked').length;
+    const hasSelection = selectedCount > 0;
+
+    // Desktop buttons
+    if (exportSelectedBtn) exportSelectedBtn.classList.toggle('hidden', !hasSelection);
+    if (viewImagesBtn) viewImagesBtn.classList.toggle('hidden', !hasSelection);
+
+    // Mobile buttons container
+    if (mobileActionButtons) mobileActionButtons.classList.toggle('hidden', !hasSelection);
+
+    // Update select all checkbox state
+    const selectAllCheckbox = document.getElementById('select-all-logs');
+    if (selectAllCheckbox) selectAllCheckbox.checked = hasSelection && selectedCount === document.querySelectorAll('.log-checkbox').length;
   }
 
   if (totalWorkersEl) totalWorkersEl.textContent = `${workers.length} คน`;
@@ -206,20 +224,147 @@ function initIndexPage(runSetup) {
       });
     }
 
-    const handlePrint = () => {
+    document.body.addEventListener('change', (e) => {
+      if (e.target.classList.contains('log-checkbox')) updateActionButtonsVisibility();
+    });
+
+    const handleExport = () => {
       const selectedIds = Array.from(document.querySelectorAll('.log-checkbox:checked')).map(cb => cb.dataset.id);
       if (selectedIds.length === 0) {
-        Swal.fire('ไม่ได้เลือกรายการ', 'กรุณาติ๊กเลือกใบงานที่ต้องการพิมพ์อย่างน้อย 1 รายการ', 'warning');
+        Swal.fire('ไม่ได้เลือกรายการ', 'กรุณาติ๊กเลือกใบงานที่ต้องการส่งออกเป็น Excel อย่างน้อย 1 รายการ', 'warning');
         return;
       }
-      // Store selected IDs in sessionStorage to be read by the new page
-      sessionStorage.setItem('selectedLogIds', JSON.stringify(selectedIds));
-      // Open the print page in a new tab
-      window.open('log-print.html', '_blank');
+
+      showLoadingOverlay('กำลังสร้างไฟล์ Excel...');
+
+      try {
+        // 1. กรองใบงานที่เลือก
+        let selectedLogs = logs.filter(log => selectedIds.includes(log.id));
+        
+        // 2. เรียงลำดับใบงานตามวันที่จากเก่าไปใหม่ เพื่อให้ชีตใน Excel เรียงตามวันที่
+        selectedLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        const workbook = XLSX.utils.book_new();
+
+        selectedLogs.forEach((log, index) => { // index ยังคงใช้เพื่อให้ชื่อชีตไม่ซ้ำกันกรณีมีหลายใบงานในวันเดียว
+          const dataForSheet = [];
+          
+          // --- Header ---
+          dataForSheet.push(["ใบรายงานค่าแรงประจำวัน"]);
+          dataForSheet.push([]); // Empty row
+          dataForSheet.push(["วันที่:", new Date(log.date).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }), "", "ผู้สั่งงาน:", log.notes || '-']);
+          dataForSheet.push(["ไซต์งาน/โครงการ:", log.site || '-', "", "รายละเอียดงาน:", log.detail || '-']);
+          dataForSheet.push([]); // Empty row
+
+          // --- Worker Table Header ---
+          const tableHeader = ["ชื่อคนงาน", "ค่าแรงพื้นฐาน", "ระยะเวลาทำงาน", "ค่าแรงดิบ", "เพิ่ม+20%", "ค่าแรงเหมา", "OT", "ยอดรับสุทธิ"];
+          dataForSheet.push(tableHeader);
+
+          // --- Worker Table Body & Summaries ---
+          let totalDaily = 0, totalFlat = 0, totalBonus = 0, grandTotal = 0;
+
+          log.details.forEach(det => {
+            const worker = workers.find(w => w.id === det.workerId);
+            const baseRate = worker ? worker.rate : 0;
+            const otWage = det.workType === 'daily' ? (det.otHours * (baseRate / 8 * 2)) : 0;
+
+            let workDuration = '-';
+            if (det.workType === 'daily') {
+              workDuration = `${det.hours} ชม.` + (det.otHours > 0 ? ` (OT: ${det.otHours} ชม.)` : '');
+            } else {
+              workDuration = 'เหมา';
+            }
+
+            dataForSheet.push([
+              det.workerName,
+              baseRate,
+              workDuration,
+              det.originalWage,
+              det.deduction > 0 ? det.deduction : 0,
+              det.workType === 'flat' ? det.originalWage : 0,
+              otWage > 0 ? otWage : 0,
+              det.netWage
+            ]);
+
+            // Calculate summaries
+            if (det.workType === 'daily') totalDaily += det.originalWage;
+            if (det.workType === 'flat') totalFlat += det.originalWage;
+            totalBonus += det.deduction;
+            grandTotal += det.netWage;
+          });
+
+          // --- Summary Section ---
+          dataForSheet.push([]); // Empty row
+          dataForSheet.push(["สรุปยอด", "", "", "", "", "", "", ""]);
+          dataForSheet.push(["ยอดรวมค่าแรงเหมาทั้งหมด:", totalFlat, "", "รวมเงินทั้งหมดสุทธิ:", grandTotal]);
+          dataForSheet.push(["ยอดรวมค่าแรง(รายวัน)ทั้งหมด:", totalDaily]);
+          dataForSheet.push(["ยอดรวมค่าดำเนินการทั้งหมด (+20%):", totalBonus]);
+          dataForSheet.push([]);
+
+          // --- Image Section ---
+          if (log.images && log.images.length > 0) {
+            dataForSheet.push(["รูปถ่ายหน้างาน (คลิกเพื่อเปิด)"]);
+            log.images.forEach(url => {
+              dataForSheet.push([url]);
+            });
+          }
+
+          const worksheet = XLSX.utils.aoa_to_sheet(dataForSheet);
+
+          // --- Styling and Merging Cells (Advanced) ---
+          worksheet['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }, // Title
+            { s: { r: 2, c: 1 }, e: { r: 2, c: 2 } }, // Date value
+            { s: { r: 3, c: 1 }, e: { r: 3, c: 2 } }, // Site value
+            { s: { r: 12, c: 0 }, e: { r: 12, c: 2 } }, // Summary Title
+            { s: { r: 13, c: 4 }, e: { r: 13, c: 7 } }, // Grand Total Value
+          ];
+          
+          // Set column widths
+          worksheet['!cols'] = [
+            { wch: 20 }, // ชื่อคนงาน
+            { wch: 15 }, // ค่าแรงพื้นฐาน
+            { wch: 20 }, // ระยะเวลาทำงาน
+            { wch: 15 }, // ค่าแรงดิบ
+            { wch: 15 }, // เพิ่ม+20%
+            { wch: 15 }, // ค่าแรงเหมา
+            { wch: 15 }, // OT
+            { wch: 15 }  // ยอดรับสุทธิ
+          ];
+
+          // 3. สร้างชื่อชีตจากวันที่ (YYYY-MM-DD) และป้องกันชื่อซ้ำ
+          const datePart = log.date.split('T')[0]; // จะได้ 'YYYY-MM-DD'
+          // ใช้ index เพื่อป้องกันกรณีมีหลายใบงานในวันเดียวกัน ทำให้ชื่อชีตไม่ซ้ำกัน
+          const sheetName = `${datePart}_${index + 1}`;
+
+          XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+        });
+
+        // เมื่อสร้างข้อมูล Excel ในหน่วยความจำเสร็จแล้ว ให้ปิดหน้าต่าง "กำลังสร้าง..."
+        hideLoadingOverlay();
+
+        // จากนั้นจึงสั่งให้ browser ดาวน์โหลดไฟล์ (ขั้นตอนนี้จะเปิดหน้าต่าง Save As)
+        XLSX.writeFile(workbook, `รายงานใบงาน_${new Date().toISOString().split('T')[0]}.xlsx`);
+        
+        // แสดง popup ว่าสำเร็จแล้ว และให้หายไปเองอัตโนมัติ
+        Swal.fire({
+          title: 'สร้างไฟล์สำเร็จ',
+          icon: 'success',
+          timer: 1500, // แสดงผล 1.5 วินาที
+          showConfirmButton: false // ซ่อนปุ่ม OK
+        });
+      } catch (error) {
+        hideLoadingOverlay();
+        console.error("Failed to export Excel:", error);
+        Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถสร้างไฟล์ Excel ได้', 'error');
+      }
     };
 
-    if (printSelectedBtn) printSelectedBtn.addEventListener('click', handlePrint);
-    if (printSelectedMobileBtn) printSelectedMobileBtn.addEventListener('click', handlePrint);
+    if (exportSelectedBtn) exportSelectedBtn.addEventListener('click', handleExport);
+    if (exportSelectedMobileBtn) exportSelectedMobileBtn.addEventListener('click', handleExport);
+
+    if (viewImagesBtn) viewImagesBtn.addEventListener('click', showSelectedImages);
+    if (viewImagesMobileBtn) viewImagesMobileBtn.addEventListener('click', showSelectedImages);
 
     if (refreshBtn) refreshBtn.addEventListener('click', () => window.location.reload());
 
@@ -229,91 +374,12 @@ function initIndexPage(runSetup) {
         document.querySelectorAll('.log-checkbox').forEach(cb => {
           cb.checked = e.target.checked;
         });
+        updateActionButtonsVisibility();
       });
     }
   }
 
   renderLogs(logs);
-}
-
-function initLogPrintPage() {
-  const selectedIds = JSON.parse(sessionStorage.getItem('selectedLogIds') || '[]');
-  const printContainer = document.getElementById('print-container');
-  const template = document.getElementById('log-page-template');
-
-  if (!printContainer || !template || selectedIds.length === 0) {
-    printContainer.innerHTML = '<div class="page"><p class="text-center text-red-500">ไม่พบข้อมูลใบงานที่เลือกสำหรับพิมพ์</p></div>';
-    return;
-  }
-
-  selectedIds.forEach(logId => {
-    const log = logs.find(l => l.id === logId);
-    if (!log) return;
-
-    const pageClone = template.content.cloneNode(true);
-    const pageElement = pageClone.querySelector('.page');
-
-    // Populate header
-    pageElement.querySelector('[data-field="date"]').textContent = new Date(log.date).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
-    pageElement.querySelector('[data-field="supervisor"]').textContent = log.notes || '-';
-    pageElement.querySelector('[data-field="site"]').textContent = log.site || '-';
-    pageElement.querySelector('[data-field="detail"]').textContent = log.detail || '-';
-
-    // Populate worker table
-    const tableBody = pageElement.querySelector('[data-field="worker-table-body"]');
-    let totalDaily = 0, totalFlat = 0, totalBonus = 0, grandTotal = 0;
-
-    log.details.forEach(det => {
-      const worker = workers.find(w => w.id === det.workerId);
-      const baseRate = worker ? worker.rate : 0;
-      const otWage = det.workType === 'daily' ? (det.otHours * (baseRate / 8 * 2)) : 0;
-
-      let workDuration = '-';
-      if (det.workType === 'daily') {
-        workDuration = `${det.hours} ชม.` + (det.otHours > 0 ? ` (OT: ${det.otHours} ชม.)` : '');
-      } else {
-        workDuration = 'เหมา';
-      }
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="p-2 border border-slate-300">${det.workerName}</td>
-        <td class="p-2 border border-slate-300 text-right">${baseRate.toFixed(2)}</td>
-        <td class="p-2 border border-slate-300 text-center">${workDuration}</td>
-        <td class="p-2 border border-slate-300 text-right">${det.originalWage.toFixed(2)}</td>
-        <td class="p-2 border border-slate-300 text-right text-sky-600">${det.deduction > 0 ? `+${det.deduction.toFixed(2)}` : '-'}</td>
-        <td class="p-2 border border-slate-300 text-right text-purple-600">${det.workType === 'flat' ? det.originalWage.toFixed(2) : '-'}</td>
-        <td class="p-2 border border-slate-300 text-right text-amber-600">${otWage > 0 ? otWage.toFixed(2) : '-'}</td>
-        <td class="p-2 border border-slate-300 text-right font-bold">${det.netWage.toFixed(2)}</td>
-      `;
-      tableBody.appendChild(tr);
-
-      // Calculate summaries
-      if (det.workType === 'daily') totalDaily += det.originalWage;
-      if (det.workType === 'flat') totalFlat += det.originalWage;
-      totalBonus += det.deduction;
-      grandTotal += det.netWage;
-    });
-
-    // Populate summary
-    pageElement.querySelector('[data-field="summary-daily"]').textContent = `฿${totalDaily.toFixed(2)}`;
-    pageElement.querySelector('[data-field="summary-flat"]').textContent = `฿${totalFlat.toFixed(2)}`;
-    pageElement.querySelector('[data-field="summary-bonus"]').textContent = `฿${totalBonus.toFixed(2)}`;
-    pageElement.querySelector('[data-field="summary-grand-total"]').textContent = `฿${grandTotal.toFixed(2)}`;
-
-    // Populate image grid
-    const imageGrid = pageElement.querySelector('[data-field="image-grid"]');
-    if (log.images && log.images.length > 0) {
-      log.images.slice(0, 6).forEach(url => { // Limit to 6 images
-        const imgContainer = document.createElement('div');
-        imgContainer.className = 'aspect-[4/3] bg-slate-100 rounded overflow-hidden border';
-        imgContainer.innerHTML = `<img src="${toDriveThumbnail(url)}" class="w-full h-full object-cover">`;
-        imageGrid.appendChild(imgContainer);
-      });
-    }
-
-    printContainer.appendChild(pageElement);
-  });
 }
 
 function initWorkersPage(runSetup) {
@@ -1015,7 +1081,79 @@ function initPivotReportPage(runSetup) {
     document.getElementById('pivot-start-date').value = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
     document.getElementById('pivot-end-date').value = today.toISOString().split('T')[0];
   }
-  renderPivotReport();
+  // renderPivotReport(); // Don't run on initial load, wait for user to click
+}
+
+function initViewDetailsPage(runSetup) {
+  console.log("Initializing View Details Page");
+  const contentDiv = document.getElementById('details-content');
+  if (!contentDiv) return;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const idsToShow = (urlParams.get('ids') || '').split(',').filter(Boolean);
+
+  if (idsToShow.length === 0) {
+    contentDiv.innerHTML = `<div class="text-center py-20 text-rose-500">
+      <i class="fa-solid fa-circle-exclamation text-3xl"></i>
+      <p class="mt-3 font-semibold">ไม่พบ ID ของใบงาน</p>
+      <p class="text-sm text-slate-500">กรุณากลับไปหน้าแรกและเลือกใบงานอีกครั้ง</p>
+    </div>`;
+    return;
+  }
+
+  let selectedLogs = logs
+    .filter(log => idsToShow.includes(log.id))
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  let reportHtml = '<div class="space-y-8">';
+
+  selectedLogs.forEach((log, index) => {
+    const totalNetWage = log.details.reduce((sum, det) => sum + (det.netWage || 0), 0);
+
+    let workerListHtml = '<ul class="text-sm list-disc list-inside text-slate-600 mt-2">';
+    log.details.forEach(det => {
+      workerListHtml += `<li>${det.workerName}: <span class="font-medium text-emerald-700">฿${(det.netWage || 0).toFixed(2)}</span></li>`;
+    });
+    workerListHtml += '</ul>';
+
+    let imageGridHtml = '';
+    if (log.images && log.images.length > 0) {
+      imageGridHtml = '<div class="grid grid-cols-2 gap-3 mt-4">';
+      log.images.forEach(url => {
+        imageGridHtml += `
+          <a href="${url}" target="_blank" class="block aspect-[4/3] bg-white rounded-lg overflow-hidden border hover:ring-2 hover:ring-blue-500 transition-all">
+            <img src="${toDriveThumbnail(url)}" class="w-full h-full object-contain" loading="lazy">
+          </a>
+        `;
+      });
+      imageGridHtml += '</div>';
+    }
+
+    reportHtml += `
+      <div class="p-4 border-b border-slate-200 last:border-b-0">
+        <h2 class="font-bold text-lg text-blue-700">${log.site || 'ไม่มีชื่อโครงการ'}</h2>
+        <div class="text-sm text-slate-500 space-y-1 mt-1">
+          <p><i class="fa-solid fa-calendar-day w-4"></i> <strong>วันที่:</strong> ${new Date(log.date).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          ${log.notes ? `<p><i class="fa-solid fa-user-tie w-4"></i> <strong>ผู้สั่งงาน:</strong> ${log.notes}</p>` : ''}
+          ${log.detail ? `<p><i class="fa-solid fa-clipboard-list w-4"></i> <strong>รายละเอียด:</strong> ${log.detail}</p>` : ''}
+        </div>
+        
+        <div class="mt-4 pt-4 border-t">
+          <p class="font-semibold">รายชื่อคนงานและค่าแรง:</p>
+          ${workerListHtml}
+          <div class="flex justify-between items-center mt-3 pt-3 border-t border-dashed">
+            <span class="font-bold">ยอดรวมสุทธิ:</span>
+            <span class="font-bold text-xl text-emerald-600">฿${totalNetWage.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+          </div>
+        </div>
+
+        ${imageGridHtml}
+      </div>
+    `;
+  });
+
+  reportHtml += '</div>';
+  contentDiv.innerHTML = reportHtml;
 }
 
 // --- Business Logic Helpers ---
@@ -1089,6 +1227,17 @@ window.deleteLog = function(id) {
 
 window.editLog = function(id) {
   window.location.href = `daily-log.html?id=${id}`;
+};
+
+window.showSelectedImages = function() {
+  const selectedIds = Array.from(document.querySelectorAll('.log-checkbox:checked')).map(cb => cb.dataset.id);
+  if (selectedIds.length === 0) {
+    Swal.fire('ไม่ได้เลือกรายการ', 'กรุณาติ๊กเลือกใบงานที่ต้องการดูรูปภาพอย่างน้อย 1 รายการ', 'warning');
+    return;
+  }
+  
+  const idsString = selectedIds.join(',');
+  window.location.href = `view-details.html?ids=${idsString}`;
 };
 
 window.toggleWorkerInputs = function(workerId) {

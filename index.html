@@ -11,7 +11,7 @@
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <!-- Custom Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=2.3">
+  <link rel="stylesheet" href="css/style.css?v=2.4">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
     body {
@@ -110,7 +110,8 @@
             <i class="fa-solid fa-history text-blue-600"></i>
             <span>รายการบันทึกค่าแรงล่าสุด</span>
           </h2>
-          <button id="btn-print-selected" class="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-1.5 px-4 rounded-lg text-xs transition-all flex items-center gap-2 hidden md:flex"><i class="fa-solid fa-print"></i> พิมพ์รายการที่เลือก</button>
+          <button id="btn-view-images" class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-1.5 px-4 rounded-lg text-xs transition-all flex items-center gap-2 hidden md:flex"><i class="fa-solid fa-images"></i> ดูรูปภาพ (ที่เลือก)</button>
+          <button id="btn-export-selected" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-1.5 px-4 rounded-lg text-xs transition-all flex items-center gap-2 hidden md:flex"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel (ที่เลือก)</button>
         </div>
         <button id="btn-refresh" class="text-blue-600 hover:text-blue-700 flex items-center gap-1 text-sm font-medium">
           <i class="fa-solid fa-rotate"></i> รีเฟรชข้อมูล
@@ -149,7 +150,10 @@
       <!-- Mobile List View (แสดงผลอย่างสวยงามบนมือถือแทนตาราง) -->
       <div id="logs-mobile-list" class="space-y-3 md:hidden">
         <div class="text-center">
-          <button id="btn-print-selected-mobile" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2.5 px-4 rounded-lg text-sm transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-print"></i> พิมพ์รายการที่เลือก</button>
+          <div id="mobile-action-buttons" class="grid grid-cols-2 gap-2 hidden">
+            <button id="btn-view-images-mobile" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2.5 px-4 rounded-lg text-sm transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-images"></i> ดูรูปภาพ</button>
+            <button id="btn-export-selected-mobile" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-4 rounded-lg text-sm transition-all flex items-center justify-center gap-2"><i class="fa-solid fa-file-excel"></i> ส่งออก Excel</button>
+          </div>
         </div>
         <div class="text-center py-8 text-slate-400">กำลังโหลดข้อมูลจาก Google Sheets...</div>
       </div>
@@ -176,7 +180,7 @@
 
   <!-- เชื่อมโยงสคริปต์หลักของแอป -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="js/api.js?v=2.3"></script>
-  <script src="js/main.js?v=2.3"></script>
+  <script src="js/api.js?v=2.4"></script>
+  <script src="js/main.js?v=2.4"></script>
 </body>
 </html>
