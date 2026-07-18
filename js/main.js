@@ -1130,7 +1130,7 @@ function initViewDetailsPage(runSetup) {
     }
 
     reportHtml += `
-      <div class="p-4 border-b border-slate-200 last:border-b-0">
+      <div class="print-item-block p-4 border-b border-slate-200 last:border-b-0">
         <h2 class="font-bold text-lg text-blue-700">${log.site || 'ไม่มีชื่อโครงการ'}</h2>
         <div class="text-sm text-slate-500 space-y-1 mt-1">
           <p><i class="fa-solid fa-calendar-day w-4"></i> <strong>วันที่:</strong> ${new Date(log.date).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</p>

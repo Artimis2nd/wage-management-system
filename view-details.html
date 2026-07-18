@@ -11,7 +11,7 @@
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <!-- Custom Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=2.4">
+  <link rel="stylesheet" href="css/style.css?v=2.5">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
     body {
@@ -22,6 +22,11 @@
       body { background-color: white; }
       main { max-width: 100%; padding: 0; }
       .print-container { box-shadow: none; border: none; }
+      .print-item-block {
+        break-inside: avoid; /* พยายามไม่ให้เนื้อหาของรายการนี้ถูกตัดขึ้นหน้าใหม่ */
+        break-after: page;   /* เมื่อจบรายการนี้ ให้ขึ้นหน้าใหม่เสมอ */
+        page-break-after: page; /* สำหรับเบราว์เซอร์รุ่นเก่า */
+      }
     }
   </style>
 </head>
@@ -59,7 +64,7 @@
   </main>
 
   <!-- App Scripts -->
-  <script src="js/api.js?v=2.4"></script>
-  <script src="js/main.js?v=2.4"></script>
+  <script src="js/api.js?v=2.5"></script>
+  <script src="js/main.js?v=2.5"></script>
 </body>
 </html>
