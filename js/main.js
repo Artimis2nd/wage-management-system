@@ -1,4 +1,5 @@
 // Global State
+const APP_VERSION = '2.6';
 let workers = [];
 let logs = [];
 
@@ -91,11 +92,11 @@ function updateSyncStatus(status) {
   if (status === 'syncing') {
     statusEl.classList.add('bg-blue-700');
     iconEl.classList.add('fa-cloud', 'fa-spin');
-    textEl.textContent = 'กำลังซิงค์...';
+    textEl.textContent = 'ซิงค์...';
   } else if (status === 'online') {
     statusEl.classList.add('bg-emerald-500');
     iconEl.classList.add('fa-cloud-arrow-up');
-    textEl.textContent = 'ออนไลน์';
+    textEl.textContent = `V${APP_VERSION} ออนไลน์`;
   } else if (status === 'offline') {
     statusEl.classList.add('bg-rose-500');
     iconEl.classList.add('fa-cloud-slash');
